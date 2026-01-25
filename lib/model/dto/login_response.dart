@@ -4,7 +4,7 @@ part 'login_response.freezed.dart';
 part 'login_response.g.dart';
 
 @freezed
-class LoginResponse with _$LoginResponse {
+abstract class LoginResponse with _$LoginResponse {
   factory LoginResponse({
     required String token,
     required String username,
@@ -17,7 +17,7 @@ class LoginResponse with _$LoginResponse {
 }
 
 @freezed
-class LoginUserDetailResponse with _$LoginUserDetailResponse {
+abstract class LoginUserDetailResponse with _$LoginUserDetailResponse {
   factory LoginUserDetailResponse({
     @JsonKey(name: 'root_folder_id') String? rootFolderId,
     @JsonKey(name: 'is_admin') @Default(false) bool isAdmin,

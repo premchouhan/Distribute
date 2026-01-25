@@ -132,6 +132,8 @@ class _StorageSettingsViewState extends State<_StorageSettingsView> {
               ),
             );
 
+            if (!context.mounted) return;
+
             if (proceed == true) {
               context.read<StorageCubit>().confirmMoveWithoutTransfer(
                 pendingPath,
