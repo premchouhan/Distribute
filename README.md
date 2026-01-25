@@ -22,7 +22,7 @@ An offline-first streaming music app that connects to your home server.
   </a>
 </p>
 
-[![Status](https://img.shields.io/badge/Status-Closed_Beta-orange?style=flat-square)]()
+[![Status](https://img.shields.io/badge/Status-Open_Beta-blue?style=flat-square)]()
 [![License](https://img.shields.io/badge/License-Open_Source-green?style=flat-square)]()
 
 </div>
