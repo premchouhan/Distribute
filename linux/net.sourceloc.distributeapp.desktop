@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Distribute
+Comment=Self-hosted music streaming service that doesn't suck.
+Exec=DistributeApp
+Icon=distributeapp
+Terminal=false
+Type=Application
+Categories=Audio;Music;Player;
+Keywords=music;audio;streaming;
+StartupWMClass=net.sourceloc.distributeapp
