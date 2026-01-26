@@ -32,10 +32,10 @@ class SlideToSkipMiniPlayer extends StatefulWidget {
 
 class _SlideToSkipMiniPlayerState extends State<SlideToSkipMiniPlayer> {
   late PageController _pageController;
+
   late Widget _current;
   Widget? _next;
   Widget? _previous;
-  bool _isTransitioning = false;
 
   @override
   void initState() {
@@ -49,22 +49,20 @@ class _SlideToSkipMiniPlayerState extends State<SlideToSkipMiniPlayer> {
   @override
   void didUpdateWidget(SlideToSkipMiniPlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If the song changed externally, update our buffered items and jump
+
     if (widget.currentSongId != oldWidget.currentSongId) {
-      if (!_isTransitioning) {
-        setState(() {
-          _current = widget.current;
-          _next = widget.next;
-          _previous = widget.previous;
-        });
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_pageController.hasClients) {
-            _pageController.jumpToPage(1);
-          }
-        });
-      }
-    } else if (!_isTransitioning) {
-      // Keep neighbor items updated if we aren't mid-swipe
+      setState(() {
+        _current = widget.current;
+        _next = widget.next;
+        _previous = widget.previous;
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(1);
+        }
+      });
+    } else {
       if (widget.next != oldWidget.next ||
           widget.previous != oldWidget.previous ||
           widget.current != oldWidget.current) {
@@ -81,18 +79,6 @@ class _SlideToSkipMiniPlayerState extends State<SlideToSkipMiniPlayer> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  void _handlePageChanged(int index) {
-    if (_isTransitioning) return;
-
-    if (index == 2 && widget.next != null) {
-      _isTransitioning = true;
-      widget.onSkip();
-    } else if (index == 0 && widget.previous != null) {
-      _isTransitioning = true;
-      widget.onPrevious?.call();
-    }
   }
 
   @override
@@ -125,25 +111,35 @@ class _SlideToSkipMiniPlayerState extends State<SlideToSkipMiniPlayer> {
             PointerDeviceKind.trackpad,
           },
         ),
-        child: NotificationListener<ScrollNotification>(
+        child: NotificationListener<ScrollUpdateNotification>(
           onNotification: (notification) {
-            if (notification is ScrollEndNotification) {
-              if (_isTransitioning) {
-                setState(() {
-                  _isTransitioning = false;
-                  _current = widget.current;
-                  _next = widget.next;
-                  _previous = widget.previous;
-                });
-                _pageController.jumpToPage(1);
+            if (notification.dragDetails != null &&
+                _pageController.hasClients) {
+              final double velocity = notification.dragDetails!.delta.dx;
+              final double page = _pageController.page ?? 1.0;
+
+              const double flingThreshold = 10.0;
+
+              int targetPage;
+              if (velocity < -flingThreshold) {
+                targetPage = page.ceil();
+              } else if (velocity > flingThreshold) {
+                targetPage = page.floor();
+              } else {
+                targetPage = page.round();
+              }
+
+              if (targetPage >= 2) {
+                widget.onSkip();
+              } else if (targetPage <= 0) {
+                widget.onPrevious?.call();
               }
             }
             return false;
           },
           child: PageView(
             controller: _pageController,
-            onPageChanged: _handlePageChanged,
-            physics: const BouncingScrollPhysics(),
+            physics: const PageScrollPhysics(),
             children: [
               _previous != null
                   ? Container(color: Colors.transparent, child: _previous)
