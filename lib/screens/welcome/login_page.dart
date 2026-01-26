@@ -111,40 +111,50 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                TextField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest.withAlpha(50),
-                    prefixIcon: Icon(AppIcons.person),
+                AutofillGroup(
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _usernameController,
+                        decoration: InputDecoration(
+                          labelText: 'Username',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest.withAlpha(50),
+                          prefixIcon: Icon(AppIcons.person),
+                        ),
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.username],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _passwordController,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest.withAlpha(50),
+                          prefixIcon: Icon(AppIcons.lock),
+                        ),
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _login(),
+                        autofillHints: const [AutofillHints.password],
+                      ),
+                    ],
                   ),
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest.withAlpha(50),
-                    prefixIcon: Icon(AppIcons.lock),
-                  ),
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _login(),
                 ),
                 const SizedBox(height: 32),
 

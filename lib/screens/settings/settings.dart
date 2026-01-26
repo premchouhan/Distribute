@@ -475,6 +475,9 @@ class _ServerUrlDialogState extends State<_ServerUrlDialog> {
               border: OutlineInputBorder(),
             ),
             autofocus: true,
+            autocorrect: false,
+            enableSuggestions: false,
+            autofillHints: const [AutofillHints.url],
           ),
           if (widget.showLogoutWarning)
             Padding(

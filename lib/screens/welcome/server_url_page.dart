@@ -208,6 +208,9 @@ class _ServerUrlPageState extends State<ServerUrlPage> {
             keyboardType: TextInputType.url,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _validateAndSave(),
+            autocorrect: false,
+            enableSuggestions: false,
+            autofillHints: const [AutofillHints.url],
           ),
           TextButton(
             onPressed: () {

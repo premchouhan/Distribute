@@ -105,58 +105,69 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                TextField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest.withAlpha(50),
-                    prefixIcon: Icon(AppIcons.person),
+                AutofillGroup(
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _usernameController,
+                        decoration: InputDecoration(
+                          labelText: 'Username',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest.withAlpha(50),
+                          prefixIcon: Icon(AppIcons.person),
+                        ),
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.newUsername],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _passwordController,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest.withAlpha(50),
+                          prefixIcon: Icon(AppIcons.lock),
+                        ),
+                        obscureText: true,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.newPassword],
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _confirmPasswordController,
+                        decoration: InputDecoration(
+                          labelText: 'Confirm Password',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest.withAlpha(50),
+                          prefixIcon: Icon(AppIcons.lockOutline),
+                        ),
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _signup(),
+                        autofillHints: const [AutofillHints.password],
+                      ),
+                    ],
                   ),
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest.withAlpha(50),
-                    prefixIcon: Icon(AppIcons.lock),
-                  ),
-                  obscureText: true,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _confirmPasswordController,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest.withAlpha(50),
-                    prefixIcon: Icon(AppIcons.lockOutline),
-                  ),
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _signup(),
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
