@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:distributeapp/core/preferences/vinyl_style.dart';
 
 class SettingsRepository {
   final SharedPreferences _prefs;
@@ -73,5 +74,19 @@ class SettingsRepository {
     } else {
       await _prefs.setString(_kCustomDownloadPath, path);
     }
+  }
+
+  static const _kVinylStyle = 'vinyl_style';
+
+  VinylStyle get vinylStyle {
+    final value = _prefs.getInt(_kVinylStyle);
+    if (value == null || value < 0 || value >= VinylStyle.values.length) {
+      return VinylStyle.modern;
+    }
+    return VinylStyle.values[value];
+  }
+
+  Future<void> setVinylStyle(VinylStyle style) async {
+    await _prefs.setInt(_kVinylStyle, style.index);
   }
 }

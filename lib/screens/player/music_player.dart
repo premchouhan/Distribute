@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:distributeapp/blocs/music/position_cubit.dart';
 import 'package:distributeapp/screens/player/player_fullscreen_content.dart';
+import 'package:distributeapp/core/preferences/settings_cubit.dart';
+import 'package:distributeapp/core/preferences/settings_state.dart';
 import 'package:distributeapp/screens/player/player_mini_content.dart';
 import 'package:distributeapp/screens/player/slide_to_skip.dart';
 import 'package:distributeapp/blocs/music/music_player_bloc.dart';
@@ -258,234 +260,254 @@ class _MusicPlayerState extends State<MusicPlayer>
     final maxPlayerHeight = size.height;
     final maxPlayerWidth = size.width;
 
-    return BlocConsumer<MusicPlayerBloc, ControllerState>(
-      listenWhen: (previous, current) =>
-          previous.currentSong != current.currentSong,
-      listener: (context, state) {
-        if (state.currentSong != null) {
-          _enterController.forward();
-        } else {
-          _enterController.reverse();
-          _expandController.reverse();
-        }
-      },
-      builder: (context, state) {
-        final currentSong = state.currentSong;
-        final artworkData = state.artworkData;
-        final isPlaying = state.isPlaying;
-        final miniMargin = EdgeInsets.fromLTRB(
-          10,
-          10,
-          0,
-          MediaQuery.of(context).padding.bottom + 90,
-        );
-
-        if (currentSong == null && _enterController.isDismissed) {
-          return const SizedBox.shrink();
-        }
-
-        final Widget fullPlayer = FullPlayerContent(
-          currentSong: currentSong,
-          artworkData: artworkData,
-          safePadding: MediaQuery.of(context).padding,
-          onCloseTap: _onCloseTap,
-          isPlaying: isPlaying,
-          onPlayPause: () => context.read<MusicPlayerBloc>().add(
-            MusicPlayerEvent.togglePlayPause(),
-          ),
-        );
-
-        return AnimatedBuilder(
-          animation: Listenable.merge([_enterController, _expandController]),
-          builder: (context, _) {
-            final t = CurvedAnimation(
-              parent: _expandController,
-              curve: _expandController.status == AnimationStatus.forward
-                  ? Curves.linearToEaseOut
-                  : Curves.easeInOutCubic,
-            ).value;
-
-            final currentHeight = lerpDouble(_miniHeight, maxPlayerHeight, t)!;
-            final currentMargin = EdgeInsets.lerp(
-              miniMargin,
-              EdgeInsets.zero,
-              t,
-            )!;
-            final miniPlayerWidth = maxPlayerWidth - (miniMargin.left * 2);
-            final currentWidth = lerpDouble(
-              miniPlayerWidth,
-              maxPlayerWidth,
-              t,
-            )!;
-            final currentRadius = lerpDouble(_miniRadius, 0, t)!;
-            final enterOffset = _slideAnimation.value.dy * _miniHeight;
-
-            final imageSide = lerpDouble(
-              miniPlayerWidth,
-              max(maxPlayerHeight, maxPlayerWidth),
-              t,
-            )!;
-
-            final Widget rawImage = OverflowBox(
-              maxWidth: imageSide,
-              maxHeight: imageSide,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: artworkData.imageFileHq != null
-                    ? Image.file(
-                        artworkData.imageFileHq!,
-                        key: ValueKey(artworkData.imageFileHq!.path),
-                        cacheWidth: 800,
-                        fit: BoxFit.cover,
-                        height: double.infinity,
-                        width: double.infinity,
-                      )
-                    : Image.asset(
-                        'assets/default-playlist-hq.png',
-                        key: const ValueKey('default-playlist'),
-                        fit: BoxFit.cover,
-                        height: double.infinity,
-                        width: double.infinity,
-                      ),
-              ),
+    return BlocBuilder<SettingsCubit, SettingsState>(
+      buildWhen: (previous, current) =>
+          previous.vinylStyle != current.vinylStyle,
+      builder: (context, settingsState) {
+        return BlocConsumer<MusicPlayerBloc, ControllerState>(
+          listenWhen: (previous, current) =>
+              previous.currentSong != current.currentSong,
+          listener: (context, state) {
+            if (state.currentSong != null) {
+              _enterController.forward();
+            } else {
+              _enterController.reverse();
+              _expandController.reverse();
+            }
+          },
+          builder: (context, state) {
+            final currentSong = state.currentSong;
+            final artworkData = state.artworkData;
+            final isPlaying = state.isPlaying;
+            final miniMargin = EdgeInsets.fromLTRB(
+              10,
+              10,
+              0,
+              MediaQuery.of(context).padding.bottom + 90,
             );
 
-            final Widget staticFullBackground = Container(
-              foregroundDecoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Color.lerp(artworkData.backgroundColor, Colors.black, 0.2)!,
-                    Colors.transparent,
-                  ],
-                ),
+            if (currentSong == null && _enterController.isDismissed) {
+              return const SizedBox.shrink();
+            }
+
+            final Widget fullPlayer = FullPlayerContent(
+              currentSong: currentSong,
+              artworkData: artworkData,
+              safePadding: MediaQuery.of(context).padding,
+              onCloseTap: _onCloseTap,
+              isPlaying: isPlaying,
+              onPlayPause: () => context.read<MusicPlayerBloc>().add(
+                MusicPlayerEvent.togglePlayPause(),
               ),
-              child: ImageFiltered(
-                imageFilter: ImageFilter.blur(
-                  sigmaX: 7,
-                  sigmaY: 7,
-                  tileMode: TileMode.clamp,
-                ),
-                child: rawImage,
-              ),
+              style: settingsState.vinylStyle,
             );
 
-            return Positioned(
-              height: currentHeight,
-              width: currentWidth,
-              left: currentMargin.left,
-              bottom: currentMargin.bottom - enterOffset,
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    color: artworkData.backgroundColor,
-                    borderRadius: BorderRadius.circular(currentRadius),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha((255.0 * 0.2).toInt()),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 350),
-                        child: _buildArtwork(context, artworkData),
-                      ),
-                      SlideToSkipMiniPlayer(
-                        currentSongId: state.mediaItem?.id,
-                        onTap: _onExpandTap,
-                        onVerticalDragUpdate: (details) {
-                          final double delta =
-                              details.primaryDelta! /
-                              (maxPlayerHeight - _miniHeight);
-                          _expandController.value -= delta;
-                        },
-                        onVerticalDragEnd: (details) {
-                          const double velocityThreshold = 300.0;
-                          final double velocity = details.primaryVelocity!;
+            return AnimatedBuilder(
+              animation: Listenable.merge([
+                _enterController,
+                _expandController,
+              ]),
+              builder: (context, _) {
+                final t = CurvedAnimation(
+                  parent: _expandController,
+                  curve: _expandController.status == AnimationStatus.forward
+                      ? Curves.linearToEaseOut
+                      : Curves.easeInOutCubic,
+                ).value;
 
-                          if (velocity < -velocityThreshold) {
-                            _expandController.forward();
-                          } else if (velocity > velocityThreshold) {
-                            _expandController.reverse();
-                          } else if (_expandController.value > 0.5) {
-                            _expandController.forward();
-                          } else {
-                            _expandController.reverse();
-                          }
-                        },
-                        onSkip: () {
-                          context.read<MusicPlayerBloc>().add(
-                            const MusicPlayerEvent.skipToNext(),
-                          );
-                        },
-                        onPrevious: () {
-                          context.read<MusicPlayerBloc>().add(
-                            const MusicPlayerEvent.skipToPrevious(),
-                          );
-                        },
-                        current: _buildSlideContent(
-                          context,
-                          state.mediaItem,
-                          artworkData,
-                          isCurrent: true,
-                        )!,
-                        next: _buildSlideContent(
-                          context,
-                          _getNeighborMediaItem(state, isNext: true),
-                          state.nextArtworkData,
-                        ),
-                        previous: _buildSlideContent(
-                          context,
-                          _getNeighborMediaItem(state, isNext: false),
-                          state.previousArtworkData,
-                        ),
-                      ),
-                      if (t > 0)
-                        Opacity(
-                          opacity: t.clamp(0.0, 1.0),
-                          child: staticFullBackground,
-                        ),
-                      if (t > 0)
-                        Container(
-                          color: Colors.black.withAlpha(
-                            (255 * 0.2 * t).toInt(),
+                final currentHeight = lerpDouble(
+                  _miniHeight,
+                  maxPlayerHeight,
+                  t,
+                )!;
+                final currentMargin = EdgeInsets.lerp(
+                  miniMargin,
+                  EdgeInsets.zero,
+                  t,
+                )!;
+                final miniPlayerWidth = maxPlayerWidth - (miniMargin.left * 2);
+                final currentWidth = lerpDouble(
+                  miniPlayerWidth,
+                  maxPlayerWidth,
+                  t,
+                )!;
+                final currentRadius = lerpDouble(_miniRadius, 0, t)!;
+                final enterOffset = _slideAnimation.value.dy * _miniHeight;
+
+                final imageSide = lerpDouble(
+                  miniPlayerWidth,
+                  max(maxPlayerHeight, maxPlayerWidth),
+                  t,
+                )!;
+
+                final Widget rawImage = OverflowBox(
+                  maxWidth: imageSide,
+                  maxHeight: imageSide,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: artworkData.imageFileHq != null
+                        ? Image.file(
+                            artworkData.imageFileHq!,
+                            key: ValueKey(artworkData.imageFileHq!.path),
+                            cacheWidth: 800,
+                            fit: BoxFit.cover,
+                            height: double.infinity,
+                            width: double.infinity,
+                          )
+                        : Image.asset(
+                            'assets/default-playlist-hq.png',
+                            key: const ValueKey('default-playlist'),
+                            fit: BoxFit.cover,
+                            height: double.infinity,
+                            width: double.infinity,
                           ),
-                        ),
-                      Visibility(
-                        visible: t > 0.0,
-                        maintainState: true,
-                        maintainAnimation: true,
-                        maintainSize: true,
-                        child: TickerMode(
-                          enabled: t > 0.0,
-                          child: Opacity(
-                            key: const ValueKey('full_player'),
-                            opacity: t.clamp(0.0, 1.0),
-                            child: Transform.translate(
-                              offset: Offset(0, (1.0 - t) * 50),
-                              child: OverflowBox(
-                                maxWidth: maxPlayerWidth,
-                                minWidth: maxPlayerWidth,
-                                maxHeight: maxPlayerHeight,
-                                minHeight: maxPlayerHeight,
-                                child: fullPlayer,
+                  ),
+                );
+
+                final Widget staticFullBackground = Container(
+                  foregroundDecoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Color.lerp(
+                          artworkData.backgroundColor,
+                          Colors.black,
+                          0.2,
+                        )!,
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(
+                      sigmaX: 7,
+                      sigmaY: 7,
+                      tileMode: TileMode.clamp,
+                    ),
+                    child: rawImage,
+                  ),
+                );
+
+                return Positioned(
+                  height: currentHeight,
+                  width: currentWidth,
+                  left: currentMargin.left,
+                  bottom: currentMargin.bottom - enterOffset,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: artworkData.backgroundColor,
+                        borderRadius: BorderRadius.circular(currentRadius),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(
+                              (255.0 * 0.2).toInt(),
+                            ),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 350),
+                            child: _buildArtwork(context, artworkData),
+                          ),
+                          SlideToSkipMiniPlayer(
+                            currentSongId: state.mediaItem?.id,
+                            onTap: _onExpandTap,
+                            onVerticalDragUpdate: (details) {
+                              final double delta =
+                                  details.primaryDelta! /
+                                  (maxPlayerHeight - _miniHeight);
+                              _expandController.value -= delta;
+                            },
+                            onVerticalDragEnd: (details) {
+                              const double velocityThreshold = 300.0;
+                              final double velocity = details.primaryVelocity!;
+
+                              if (velocity < -velocityThreshold) {
+                                _expandController.forward();
+                              } else if (velocity > velocityThreshold) {
+                                _expandController.reverse();
+                              } else if (_expandController.value > 0.5) {
+                                _expandController.forward();
+                              } else {
+                                _expandController.reverse();
+                              }
+                            },
+                            onSkip: () {
+                              context.read<MusicPlayerBloc>().add(
+                                const MusicPlayerEvent.skipToNext(),
+                              );
+                            },
+                            onPrevious: () {
+                              context.read<MusicPlayerBloc>().add(
+                                const MusicPlayerEvent.skipToPrevious(),
+                              );
+                            },
+                            current: _buildSlideContent(
+                              context,
+                              state.mediaItem,
+                              artworkData,
+                              isCurrent: true,
+                            )!,
+                            next: _buildSlideContent(
+                              context,
+                              _getNeighborMediaItem(state, isNext: true),
+                              state.nextArtworkData,
+                            ),
+                            previous: _buildSlideContent(
+                              context,
+                              _getNeighborMediaItem(state, isNext: false),
+                              state.previousArtworkData,
+                            ),
+                          ),
+                          if (t > 0)
+                            Opacity(
+                              opacity: t.clamp(0.0, 1.0),
+                              child: staticFullBackground,
+                            ),
+                          if (t > 0)
+                            Container(
+                              color: Colors.black.withAlpha(
+                                (255 * 0.2 * t).toInt(),
+                              ),
+                            ),
+                          Visibility(
+                            visible: t > 0.0,
+                            maintainState: true,
+                            maintainAnimation: true,
+                            maintainSize: true,
+                            child: TickerMode(
+                              enabled: t > 0.0,
+                              child: Opacity(
+                                key: const ValueKey('full_player'),
+                                opacity: t.clamp(0.0, 1.0),
+                                child: Transform.translate(
+                                  offset: Offset(0, (1.0 - t) * 50),
+                                  child: OverflowBox(
+                                    maxWidth: maxPlayerWidth,
+                                    minWidth: maxPlayerWidth,
+                                    maxHeight: maxPlayerHeight,
+                                    minHeight: maxPlayerHeight,
+                                    child: fullPlayer,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             );
           },
         );

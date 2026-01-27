@@ -11,7 +11,7 @@ sealed class QueueState with _$QueueState {
   const factory QueueState({
     required List<Song> queue,
     required int queueIndex,
-    required List<Song> originalQueue, // Kept for un-shuffling
+    required List<Song> originalQueue,
     required bool isShuffled,
     required LoopMode loopMode,
   }) = _QueueState;
@@ -57,29 +57,25 @@ class QueueManager {
     _emit(state.copyWith(queue: newQueue, originalQueue: newOriginal));
   }
 
-  /// Returns the next song index, or null if queue ended
   int? getNextIndex() {
     if (state.queue.isEmpty) return null;
 
-    // Loop One: Stay on same index
     if (state.loopMode == LoopMode.one) {
       if (state.queueIndex == -1 && state.queue.isNotEmpty) return 0;
       return state.queueIndex;
     }
 
-    // Normal Next
     final nextIndex = state.queueIndex + 1;
 
     if (nextIndex < state.queue.length) {
       return nextIndex;
     }
 
-    // End of Queue
     if (state.loopMode == LoopMode.all) {
       return 0;
     }
 
-    return null; // Stop
+    return null;
   }
 
   int? getPreviousIndex() {
@@ -90,12 +86,11 @@ class QueueManager {
       return prevIndex;
     }
 
-    // Initial underflow
     if (state.loopMode == LoopMode.all) {
       return state.queue.length - 1;
     }
 
-    return 0; // Guard at start
+    return 0;
   }
 
   void setCurrentIndex(int index) {
@@ -116,7 +111,6 @@ class QueueManager {
     final currentSong = this.currentSong;
 
     if (shouldShuffle) {
-      // Shuffle but keep current song playing
       final listToShuffle = List<Song>.from(state.originalQueue);
       if (currentSong != null) {
         listToShuffle.removeWhere((s) => s.id == currentSong.id);
@@ -131,7 +125,6 @@ class QueueManager {
         newIndex = -1;
       }
     } else {
-      // Restore original order
       newQueue = List.of(state.originalQueue);
       if (currentSong != null) {
         newIndex = newQueue.indexWhere((s) => s.id == currentSong.id);

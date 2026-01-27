@@ -75,6 +75,8 @@ class PlaylistRepository {
             .toSet()
             .toList();
 
+        final playlistSong = songRows.first.readTableOrNull(_dao.playlistSongs);
+
         return Song(
           id: songEntity.id,
           title: songEntity.title,
@@ -84,6 +86,7 @@ class PlaylistRepository {
           fileId: songEntity.fileId,
           format: songEntity.format,
           isDownloaded: songEntity.isDownloaded,
+          order: playlistSong?.order,
         );
       }).toList();
     });
@@ -147,6 +150,16 @@ class PlaylistRepository {
 
   Future<void> movePlaylist(String itemId, String? folderId) async {
     await _dao.movePlaylist(itemId, folderId);
+    _syncManager.triggerSync();
+  }
+
+  Future<void> moveSong(
+    String playlistId,
+    String songId,
+    String? prevOrderId,
+    String? nextOrderId,
+  ) async {
+    await _dao.moveSong(playlistId, songId, prevOrderId, nextOrderId);
     _syncManager.triggerSync();
   }
 }

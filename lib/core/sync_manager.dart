@@ -7,6 +7,7 @@ import 'package:distributeapp/api/playlists_api.dart';
 import 'package:distributeapp/core/database/daos/sync_dao.dart';
 import 'package:distributeapp/core/database/database.dart';
 import 'package:distributeapp/core/sync_status.dart';
+
 import 'package:distributeapp/repositories/auth_repository.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
@@ -223,6 +224,13 @@ class SyncManager {
         await _playlistsApi.removeSongFromPlaylist(
           data['playlistId'],
           data['songId'],
+        );
+        break;
+      case 'MOVE_SONG':
+        await _playlistsApi.moveSong(
+          data['playlistId'],
+          data['songId'],
+          data['order'],
         );
         break;
       default:
@@ -447,7 +455,9 @@ class SyncManager {
 
         // Handle Playlist Songs
         for (final p in cleanPlaylists) {
-          await _syncDao.replacePlaylistSongs(p.id, p.songIds);
+          if (p.playlistSongs.isNotEmpty) {
+            await _syncDao.replacePlaylistSongs(p.id, p.playlistSongs);
+          }
         }
       }
     }

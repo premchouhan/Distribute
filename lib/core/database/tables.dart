@@ -67,6 +67,7 @@ class Artists extends Table {
 class PlaylistSongs extends Table {
   TextColumn get playlistId => text().references(Playlists, #id)();
   TextColumn get songId => text().references(Songs, #id)();
+  TextColumn get order => text().withDefault(const Constant(''))();
 
   @override
   Set<Column> get primaryKey => {playlistId, songId};

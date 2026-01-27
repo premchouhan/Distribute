@@ -1,5 +1,6 @@
 import 'package:distributeapp/core/preferences/settings_repository.dart';
 import 'package:distributeapp/core/preferences/settings_state.dart';
+import 'package:distributeapp/core/preferences/vinyl_style.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SettingsCubit extends Cubit<SettingsState> {
@@ -16,6 +17,7 @@ class SettingsCubit extends Cubit<SettingsState> {
           debugMode: _repo.debugMode,
           customDownloadPath: _repo.customDownloadPath,
           defaultDataPath: _repo.defaultDataPath,
+          vinylStyle: _repo.vinylStyle,
         ),
       );
 
@@ -52,5 +54,10 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> setCustomDownloadPath(String? path) async {
     await _repo.setCustomDownloadPath(path);
     emit(state.copyWith(customDownloadPath: path));
+  }
+
+  void setVinylStyle(VinylStyle style) async {
+    await _repo.setVinylStyle(style);
+    emit(state.copyWith(vinylStyle: style));
   }
 }

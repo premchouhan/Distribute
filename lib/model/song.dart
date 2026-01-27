@@ -17,6 +17,7 @@ abstract class Song with _$Song {
     required String? fileId,
     required String? format,
     required bool isDownloaded,
+    String? order,
   }) = _Song;
 
   const Song._();

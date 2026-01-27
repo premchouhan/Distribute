@@ -9,7 +9,18 @@ part 'folders_dao.g.dart';
 class FoldersDao extends DatabaseAccessor<AppDatabase> with _$FoldersDaoMixin {
   FoldersDao(super.db);
 
-  Stream<List<FolderEntity>> watchAll() => select(folders).watch();
+  Stream<List<FolderEntity>> watchByFolder(String? parentId) {
+    return (select(folders)..where(
+          (t) => parentId == null
+              ? t.parentFolderId.isNull()
+              : t.parentFolderId.equals(parentId),
+        ))
+        .watch();
+  }
+
+  Stream<FolderEntity?> watchFolder(String id) {
+    return (select(folders)..where((t) => t.id.equals(id))).watchSingleOrNull();
+  }
 
   Future<void> createFolder(FolderEntity newFolder) async {
     await transaction(() async {

@@ -73,6 +73,7 @@ class LibraryScreen extends StatelessWidget {
           ),
           body: state.maybeWhen(
             loading: () => const Center(child: CircularProgressIndicator()),
+            error: (message) => Center(child: Text("Error: $message")),
             loaded:
                 (
                   subFolders,

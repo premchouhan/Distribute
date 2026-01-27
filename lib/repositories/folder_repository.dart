@@ -11,10 +11,18 @@ class FolderRepository {
 
   FolderRepository(this._dao, this._syncManager);
 
-  Stream<List<PlaylistFolder>> getAllFolders() {
-    return _dao.watchAll().map(
-      (folders) => folders.map((f) => PlaylistFolder.fromDb(f)).toList(),
-    );
+  Stream<List<PlaylistFolder>> getFolders(String? parentId) {
+    return _dao
+        .watchByFolder(parentId)
+        .map(
+          (folders) => folders.map((f) => PlaylistFolder.fromDb(f)).toList(),
+        );
+  }
+
+  Stream<PlaylistFolder?> watchFolder(String id) {
+    return _dao
+        .watchFolder(id)
+        .map((f) => f == null ? null : PlaylistFolder.fromDb(f));
   }
 
   Future<void> createFolder(String name, String? parentFolderId) async {

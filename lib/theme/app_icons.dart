@@ -114,4 +114,8 @@ class AppIcons {
       : Icons.warning_amber_rounded;
   static IconData get home =>
       isCupertino ? CupertinoIcons.home : Icons.home_rounded;
+  static IconData get brush =>
+      isCupertino ? CupertinoIcons.paintbrush : Icons.brush;
+  static IconData get album =>
+      isCupertino ? CupertinoIcons.music_albums : Icons.album;
 }

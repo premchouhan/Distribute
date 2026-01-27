@@ -3,6 +3,7 @@ import 'package:distributeapp/model/playlist.dart';
 import 'package:distributeapp/model/playlist_folder.dart';
 import 'package:distributeapp/repositories/folder_repository.dart';
 import 'package:distributeapp/repositories/playlist_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:rxdart/rxdart.dart';
@@ -13,7 +14,7 @@ part 'file_system_bloc.freezed.dart';
 
 // Events
 @freezed
-class FileSystemEvent with _$FileSystemEvent {
+abstract class FileSystemEvent with _$FileSystemEvent {
   const factory FileSystemEvent.loadFolder(String? folderId) = _LoadFolder;
   const factory FileSystemEvent.createFolder(String name) = _CreateFolderReq;
   const factory FileSystemEvent.createPlaylist(String name) =
@@ -30,7 +31,7 @@ class FileSystemEvent with _$FileSystemEvent {
 
 // States
 @freezed
-class FileSystemState with _$FileSystemState {
+abstract class FileSystemState with _$FileSystemState {
   const factory FileSystemState.loading() = _Loading;
   const factory FileSystemState.loaded({
     required List<PlaylistFolder> subFolders,
@@ -39,6 +40,7 @@ class FileSystemState with _$FileSystemState {
     required String currentFolderName,
     required bool isRoot,
   }) = _Loaded;
+  const factory FileSystemState.error(String message) = _Error;
 }
 
 class FileSystemBloc extends Bloc<FileSystemEvent, FileSystemState> {
@@ -80,35 +82,48 @@ class FileSystemBloc extends Bloc<FileSystemEvent, FileSystemState> {
 
     final targetFolderId = (event.folderId == null) ? rootId! : event.folderId!;
 
-    final combinedStream = Rx.combineLatest2(
-      _folderRepo.getAllFolders(),
-      _playlistRepo.getPlaylists(targetFolderId),
-      (List<PlaylistFolder> allFolders, List<Playlist> playlists) {
-        final subFolders = allFolders
-            .where((f) => f.parentFolderId == targetFolderId)
-            .toList();
+    final nameStream = (targetFolderId == _authRepo.rootFolderId)
+        ? Stream<String?>.value(null)
+        : _folderRepo
+              .watchFolder(targetFolderId)
+              .map((f) => f?.name)
+              .handleError((e, s) {
+                debugPrint("Error watching folder name: $e");
+                throw e;
+              });
 
-        String? currentFolderName;
-        if (targetFolderId.isNotEmpty) {
-          try {
-            if (targetFolderId == _authRepo.rootFolderId) {
-            } else {
-              currentFolderName = allFolders
-                  .firstWhere((f) => f.id == targetFolderId)
-                  .name;
-            }
-          } catch (_) {}
-        }
+    final foldersStream = _folderRepo.getFolders(targetFolderId).handleError((
+      e,
+      s,
+    ) {
+      debugPrint("Error fetching folders: $e");
+      throw e;
+    });
 
+    final playlistsStream = _playlistRepo
+        .getPlaylists(targetFolderId)
+        .handleError((e, s) {
+          debugPrint("Error fetching playlists: $e");
+          throw e;
+        });
+
+    final combinedStream = Rx.combineLatest3(
+      foldersStream,
+      playlistsStream,
+      nameStream,
+      (
+        List<PlaylistFolder> subFolders,
+        List<Playlist> playlists,
+        String? folderName,
+      ) {
         return FileSystemState.loaded(
           subFolders: subFolders,
           playlists: playlists,
           currentFolderId: targetFolderId,
           currentFolderName:
-              (currentFolderName == null &&
-                  targetFolderId == _authRepo.rootFolderId)
+              (folderName == null && targetFolderId == _authRepo.rootFolderId)
               ? "Distribute"
-              : (currentFolderName ?? "Unknown Folder"),
+              : (folderName ?? "Unknown Folder"),
           isRoot: targetFolderId == _authRepo.rootFolderId,
         );
       },
@@ -117,7 +132,10 @@ class FileSystemBloc extends Bloc<FileSystemEvent, FileSystemState> {
     await emit.forEach(
       combinedStream,
       onData: (state) => state,
-      onError: (_, _) => const FileSystemState.loading(),
+      onError: (error, stackTrace) {
+        debugPrint("FileSystemBloc error: $error");
+        return FileSystemState.error(error.toString());
+      },
     );
   }
 

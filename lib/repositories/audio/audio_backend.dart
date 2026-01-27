@@ -36,13 +36,11 @@ class AudioBackend {
   Future<void> play(String localPath) async {
     if (_dummySoundEnabled) return;
 
-    // 1. If we have a prepared job for this path, use it.
     if (_preparedJob?.path == localPath && _preparedJob!.isLoaded) {
       await stop(disposeSession: false, clearPrepared: false);
       _currentJob = _preparedJob;
       _preparedJob = null;
     } else {
-      // Regular play: Stop everything and load new.
       await stop(disposeSession: false);
       _currentJob = _PlaybackJob(localPath, _session!, _onJobFinished);
       await _currentJob!.load();
@@ -52,7 +50,6 @@ class AudioBackend {
       await _currentJob!.play();
       await _session?.setActive(true);
     } catch (e) {
-      // If job was cancelled by a newer one, we ignore error
       debugPrint('AudioBackend Error: $e');
       rethrow;
     }
@@ -61,10 +58,8 @@ class AudioBackend {
   Future<void> preload(String localPath) async {
     if (_dummySoundEnabled) return;
 
-    // If we are already preloaded with this path, do nothing.
     if (_preparedJob?.path == localPath) return;
 
-    // Clear old prepared job
     await _preparedJob?.stop();
 
     final job = _PlaybackJob(localPath, _session!, _onJobFinished);
@@ -101,23 +96,18 @@ class AudioBackend {
     if (_currentJob != job) return;
 
     if (_preparedJob != null && _preparedJob!.isLoaded) {
-      // GAPLESS TRANSITION
       debugPrint("AudioBackend: Gapless transition to ${_preparedJob!.path}");
 
-      // Swap
       final oldJob = _currentJob;
       _currentJob = _preparedJob;
       _preparedJob = null;
 
-      // Start next
       _currentJob!.play().then((_) {
         _gaplessTransitionController.add(_currentJob!.path);
       });
 
-      // Cleanup old (it's already finished, but we need to dispose source)
       oldJob?.stop();
     } else {
-      // End of queue
       _songFinishedController.add(null);
     }
   }

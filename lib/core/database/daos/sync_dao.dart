@@ -1,6 +1,7 @@
 import 'package:distributeapp/core/database/database.dart';
 import 'package:drift/drift.dart';
 import '../tables.dart';
+import '../../../model/dto/server_playlist.dart';
 
 part 'sync_dao.g.dart';
 
@@ -88,7 +89,7 @@ class SyncDao extends DatabaseAccessor<AppDatabase> with _$SyncDaoMixin {
 
   Future<void> replacePlaylistSongs(
     String playlistId,
-    List<String> songIds,
+    List<ServerPlaylistSong> items,
   ) async {
     await transaction(() async {
       // Delete existing songs for playlist
@@ -99,11 +100,12 @@ class SyncDao extends DatabaseAccessor<AppDatabase> with _$SyncDaoMixin {
       await batch((batch) {
         batch.insertAll(
           playlistSongs,
-          songIds
+          items
               .map(
-                (sid) => PlaylistSongsCompanion.insert(
+                (item) => PlaylistSongsCompanion.insert(
                   playlistId: playlistId,
-                  songId: sid,
+                  songId: item.songId,
+                  order: Value(item.order),
                 ),
               )
               .toList(),

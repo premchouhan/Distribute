@@ -14,6 +14,7 @@ import 'package:distributeapp/screens/request.dart';
 import 'package:distributeapp/screens/search/search.dart';
 import 'package:distributeapp/screens/settings/settings.dart';
 import 'package:distributeapp/screens/settings/storage_settings.dart';
+import 'package:distributeapp/screens/settings/customization_settings.dart';
 import 'package:distributeapp/core/preferences/settings_repository.dart';
 import 'package:distributeapp/core/preferences/settings_cubit.dart';
 import 'package:distributeapp/repositories/playlist_repository.dart';
@@ -254,6 +255,11 @@ final GoRouter router = GoRouter(
                 GoRoute(
                   path: 'storage',
                   builder: (context, state) => const StorageSettingsScreen(),
+                ),
+                GoRoute(
+                  path: 'customization',
+                  builder: (context, state) =>
+                      const CustomizationSettingsScreen(),
                 ),
                 GoRoute(
                   path: 'requests',

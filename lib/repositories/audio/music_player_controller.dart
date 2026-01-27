@@ -257,9 +257,14 @@ class MusicPlayerController {
       if (newSong != null) {
         if (_isGaplessTransition) {
           _isGaplessTransition = false;
-          // We are already playing the right song in audio backend.
-          // Just update metadata.
-          _loadArtworkForSong(newSong);
+
+          ArtworkData artworkData = ArtworkData.empty;
+          try {
+            artworkData = await artworkRepository.getArtworkData(
+              newSong.albumId,
+              ArtQuality.hq,
+            );
+          } catch (_) {}
 
           final localPath = newSong.localPath(rootPath);
           final mediaItem = await _createMediaItem(
@@ -275,6 +280,7 @@ class MusicPlayerController {
               position: Duration.zero,
               isPlaying: true, // Backend is playing
               processingState: AudioProcessingState.ready,
+              artworkData: artworkData,
             ),
           );
         } else {
@@ -419,7 +425,7 @@ class MusicPlayerController {
     if (index != null) {
       final song = _queueManager.state.queue[index];
 
-      if (await isSongAvailable(song)) {
+      if (await isSongAvailable(song) && isNext) {
         await _audioBackend.preload(song.localPath(rootPath));
       }
 

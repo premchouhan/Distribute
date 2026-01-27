@@ -3,6 +3,7 @@ import 'package:distributeapp/model/song.dart';
 import 'package:distributeapp/screens/player/player_slider.dart';
 import 'package:distributeapp/screens/player/queue_sheet.dart';
 import 'package:distributeapp/screens/player/vinyl.dart';
+import 'package:distributeapp/core/preferences/vinyl_style.dart';
 import 'package:distributeapp/core/artwork/artwork_repository.dart';
 import 'package:distributeapp/blocs/music/music_player_bloc.dart';
 import 'package:distributeapp/theme/app_icons.dart';
@@ -18,6 +19,7 @@ class FullPlayerContent extends StatelessWidget {
   final VoidCallback onCloseTap;
   final VoidCallback onPlayPause;
   final bool isPlaying;
+  final VinylStyle style;
 
   const FullPlayerContent({
     super.key,
@@ -27,6 +29,7 @@ class FullPlayerContent extends StatelessWidget {
     required this.onCloseTap,
     required this.onPlayPause,
     required this.isPlaying,
+    required this.style,
   });
 
   @override
@@ -90,6 +93,7 @@ class FullPlayerContent extends StatelessWidget {
                         effectColor: artworkData.effectColor,
                         isPlaying: isPlaying,
                         easterEggs: easterEggs,
+                        style: style,
                       )
                     : const SizedBox(),
               ),

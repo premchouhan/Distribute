@@ -28,8 +28,54 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  AppDatabase.forTesting(super.e);
+
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 2) {
+          await m.addColumn(playlistSongs, playlistSongs.order);
+
+          final rows = await select(playlistSongs).get();
+
+          final byPlaylist = <String, List<PlaylistSong>>{};
+          for (final row in rows) {
+            byPlaylist.putIfAbsent(row.playlistId, () => []).add(row);
+          }
+
+          for (final playlistId in byPlaylist.keys) {
+            final songsInOrder = await customSelect(
+              'SELECT playlist_id, song_id FROM playlist_songs WHERE playlist_id = ? ORDER BY rowid ASC',
+              variables: [Variable.withString(playlistId)],
+              readsFrom: {playlistSongs},
+            ).get();
+
+            int counter = 1;
+            for (final row in songsInOrder) {
+              final songId = row.read<String>('song_id');
+              final orderKey = counter.toString().padLeft(2, '0');
+
+              await (update(playlistSongs)..where(
+                    (t) =>
+                        t.playlistId.equals(playlistId) &
+                        t.songId.equals(songId),
+                  ))
+                  .write(PlaylistSongsCompanion(order: Value(orderKey)));
+
+              counter++;
+            }
+          }
+        }
+      },
+    );
+  }
 
   Future<void> wipeDatabase() async {
     await close();

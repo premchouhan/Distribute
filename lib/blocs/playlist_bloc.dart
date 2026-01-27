@@ -40,6 +40,12 @@ class PlaylistEvent with _$PlaylistEvent {
     required String itemId,
     required String folderId,
   }) = _MovePlaylist;
+  const factory PlaylistEvent.moveSong({
+    required String playlistId,
+    required String songId,
+    required int oldIndex,
+    required int newIndex,
+  }) = _MoveSong;
 }
 
 // States
@@ -75,6 +81,7 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
     on<_Delete>(_onDeletePlaylist);
     on<_MoveFolder>(_onMoveFolder);
     on<_MovePlaylist>(_onMovePlaylist);
+    on<_MoveSong>(_onMoveSong);
   }
 
   Future<void> _onLoad(_Load event, Emitter<PlaylistState> emit) async {
@@ -176,6 +183,55 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
       await _repo.movePlaylist(event.itemId, event.folderId);
     } catch (e) {
       emit(PlaylistState.error("Failed to move playlist: $e"));
+    }
+  }
+
+  Future<void> _onMoveSong(_MoveSong event, Emitter<PlaylistState> emit) async {
+    final currentState = state;
+    if (currentState is! _Loaded) return;
+
+    var oldIndex = event.oldIndex;
+    var newIndex = event.newIndex;
+
+    // ReorderableListView increments newIndex by 1 when moving down
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+
+    if (oldIndex == newIndex) return;
+
+    final songs = currentState.songs;
+    if (oldIndex < 0 ||
+        oldIndex >= songs.length ||
+        newIndex < 0 ||
+        newIndex >= songs.length) {
+      return;
+    }
+
+    String? prevOrderId;
+    String? nextOrderId;
+
+    var mutableSongs = List<Song>.from(songs);
+    final movedSong = mutableSongs.removeAt(oldIndex);
+    mutableSongs.insert(newIndex, movedSong);
+
+    if (newIndex > 0) {
+      prevOrderId = mutableSongs[newIndex - 1].order;
+    }
+
+    if (newIndex < mutableSongs.length - 1) {
+      nextOrderId = mutableSongs[newIndex + 1].order;
+    }
+
+    try {
+      await _repo.moveSong(
+        event.playlistId,
+        event.songId,
+        prevOrderId,
+        nextOrderId,
+      );
+    } catch (e) {
+      emit(PlaylistState.error("Failed to move song: $e"));
     }
   }
 }

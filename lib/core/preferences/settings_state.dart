@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:distributeapp/core/preferences/vinyl_style.dart';
 
 part 'settings_state.freezed.dart';
 
@@ -14,6 +15,7 @@ sealed class SettingsState with _$SettingsState {
     required bool debugMode,
     required String? customDownloadPath,
     required String defaultDataPath,
+    required VinylStyle vinylStyle,
   }) = _SettingsState;
 
   String get rootPath => customDownloadPath ?? defaultDataPath;

@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:distributeapp/core/preferences/vinyl_style.dart';
 
 class VinylWidget extends StatefulWidget {
   final File coverFile;
@@ -9,6 +11,7 @@ class VinylWidget extends StatefulWidget {
   final Color effectColor;
   final bool isPlaying;
   final List<bool> easterEggs;
+  final VinylStyle style;
 
   const VinylWidget({
     super.key,
@@ -17,6 +20,7 @@ class VinylWidget extends StatefulWidget {
     required this.effectColor,
     required this.isPlaying,
     required this.easterEggs,
+    required this.style,
   });
 
   @override
@@ -40,6 +44,8 @@ class _VinylWidgetState extends State<VinylWidget>
   late ImageProvider _resizedStaticProvider;
   late ImageProvider _resizedEffectProvider;
 
+  static const int _cacheWidth = 2048;
+
   @override
   void initState() {
     super.initState();
@@ -47,39 +53,49 @@ class _VinylWidgetState extends State<VinylWidget>
     if (widget.isPlaying) {
       _velocity = _targetSpeed;
     }
-    _initializeResources();
+    _initStaticResources();
+    _initCover();
+    _initBg();
   }
 
   @override
   void didUpdateWidget(VinylWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.coverFile.path != oldWidget.coverFile.path ||
-        widget.effectColor != oldWidget.effectColor) {
-      _initializeResources();
+    if (widget.coverFile.path != oldWidget.coverFile.path) {
+      _initCover();
+    }
+    if (widget.style != oldWidget.style) {
+      _initBg();
     }
   }
 
-  void _initializeResources() {
-    const int cacheWidth = 2048;
-
+  void _initCover() {
     _resizedCoverProvider = ResizeImage(
       FileImage(widget.coverFile),
-      width: cacheWidth,
+      width: _cacheWidth,
     );
+  }
 
+  void _initBg() {
     _resizedBgProvider = ResizeImage(
-      const AssetImage('assets/vinyl/vinyl-spinning.png'),
-      width: cacheWidth,
+      AssetImage(
+        widget.style == VinylStyle.transparent
+            ? 'assets/vinyl/vinyl-spinning-alt.png'
+            : 'assets/vinyl/vinyl-spinning.png',
+      ),
+      width: _cacheWidth,
     );
+  }
 
+  void _initStaticResources() {
     _resizedStaticProvider = ResizeImage(
       const AssetImage('assets/vinyl/vinyl-static.png'),
-      width: cacheWidth,
+      width: _cacheWidth,
     );
 
     _resizedEffectProvider = ResizeImage(
       const AssetImage('assets/vinyl/vinyl-effect.png'),
-      width: cacheWidth,
+      width: _cacheWidth,
     );
   }
 
@@ -123,12 +139,16 @@ class _VinylWidgetState extends State<VinylWidget>
         final coverSize = size * coverRatio;
 
         final Widget coverImage = ClipOval(
-          child: Image(
-            image: _resizedCoverProvider,
-            width: coverSize,
-            height: coverSize,
-            fit: BoxFit.cover,
-            gaplessPlayback: true,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: Image(
+              key: ValueKey(widget.coverFile.path),
+              image: _resizedCoverProvider,
+              width: coverSize,
+              height: coverSize,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+            ),
           ),
         );
 
@@ -181,7 +201,40 @@ class _VinylWidgetState extends State<VinylWidget>
                       angle: angle,
                       child: Stack(
                         alignment: Alignment.center,
-                        children: [coverImage, vinylBg],
+                        children: [
+                          coverImage,
+                          // Circle Blur in the middle
+                          Center(
+                            child: Container(
+                              width: size * 0.33,
+                              height: size * 0.33,
+                              decoration: BoxDecoration(shape: BoxShape.circle),
+                              child: ClipOval(
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 5,
+                                    sigmaY: 5,
+                                  ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        width: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          vinylBg,
+                        ],
                       ),
                     ),
 

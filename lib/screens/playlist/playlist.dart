@@ -17,11 +17,19 @@ import 'package:distributeapp/core/service_locator.dart';
 import 'package:distributeapp/components/hoverable_icon_button.dart';
 import 'package:distributeapp/components/hoverable_area.dart';
 import 'package:distributeapp/components/hoverable_list_tile.dart';
+import 'package:distributeapp/core/sync_manager.dart';
 
-class PlaylistScreen extends StatelessWidget {
+class PlaylistScreen extends StatefulWidget {
   final String playlistId;
 
   const PlaylistScreen({super.key, required this.playlistId});
+
+  @override
+  State<PlaylistScreen> createState() => _PlaylistScreenState();
+}
+
+class _PlaylistScreenState extends State<PlaylistScreen> {
+  bool _isEditMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -122,40 +130,75 @@ class PlaylistScreen extends StatelessWidget {
             Text('You', style: Theme.of(context).textTheme.bodyMedium),
           ],
         ),
+        const SizedBox(height: 16),
+        FilledButton.tonal(
+          style: FilledButton.styleFrom(minimumSize: const Size(100, 36)),
+          onPressed: () {
+            setState(() {
+              _isEditMode = !_isEditMode;
+            });
+          },
+          child: Row(
+            spacing: 6,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_isEditMode ? AppIcons.check : AppIcons.menu),
+              Text(_isEditMode ? 'Done' : 'Edit'),
+            ],
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildList(BuildContext context, Playlist playlist, List<Song> songs) {
     return Expanded(
-      child: ListView.builder(
-        itemCount: songs.length + 1,
-
-        padding: EdgeInsets.fromLTRB(
-          8,
-          MediaQuery.of(context).padding.top + 8,
-          8,
-          8 + MediaQuery.of(context).padding.bottom,
-        ),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: _buildHeader(context, playlist),
-            );
-          }
-          final song = songs[index - 1];
-
-          return _SongTile(
-            key: ValueKey(song.id),
-            song: song,
-            onPlay: () {
-              context.read<MusicPlayerBloc>().add(
-                MusicPlayerEvent.playPlaylist(songs, index - 1),
-              );
-            },
-          );
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await sl<SyncManager>().triggerSync();
         },
+        child: ReorderableListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          buildDefaultDragHandles: false,
+          header: Padding(
+            key: const ValueKey('header'),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: _buildHeader(context, playlist),
+          ),
+          itemCount: songs.length,
+          padding: EdgeInsets.fromLTRB(
+            8,
+            MediaQuery.of(context).padding.top + 8,
+            8,
+            8 + MediaQuery.of(context).padding.bottom,
+          ),
+          onReorder: (int oldIndex, int newIndex) {
+            final song = songs[oldIndex];
+            context.read<PlaylistBloc>().add(
+              PlaylistEvent.moveSong(
+                playlistId: playlist.id,
+                songId: song.id,
+                oldIndex: oldIndex,
+                newIndex: newIndex,
+              ),
+            );
+          },
+          itemBuilder: (context, index) {
+            final song = songs[index];
+
+            return _SongTile(
+              key: ValueKey(song.id),
+              song: song,
+              index: index,
+              isEditMode: _isEditMode,
+              onPlay: () {
+                context.read<MusicPlayerBloc>().add(
+                  MusicPlayerEvent.playPlaylist(songs, index),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -184,8 +227,16 @@ class PlaylistScreen extends StatelessWidget {
 class _SongTile extends StatefulWidget {
   final Song song;
   final VoidCallback onPlay;
+  final int index;
+  final bool isEditMode;
 
-  const _SongTile({super.key, required this.song, required this.onPlay});
+  const _SongTile({
+    super.key,
+    required this.song,
+    required this.onPlay,
+    required this.index,
+    required this.isEditMode,
+  });
 
   @override
   State<_SongTile> createState() => _SongTileState();
@@ -217,36 +268,55 @@ class _SongTileState extends State<_SongTile> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        trailing: BlocBuilder<DownloadCubit, DownloadState>(
-          buildWhen: (previous, current) {
-            final prevStatus = previous.queue[widget.song.fileId];
-            final currStatus = current.queue[widget.song.fileId];
-            return prevStatus != currStatus;
-          },
-          builder: (context, state) {
-            final downloadStatus =
-                state.queue[widget.song.fileId] ??
-                const DownloadStatus.initial();
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            BlocBuilder<DownloadCubit, DownloadState>(
+              buildWhen: (previous, current) {
+                final prevStatus = previous.queue[widget.song.fileId];
+                final currStatus = current.queue[widget.song.fileId];
+                return prevStatus != currStatus;
+              },
+              builder: (context, state) {
+                final downloadStatus =
+                    state.queue[widget.song.fileId] ??
+                    const DownloadStatus.initial();
 
-            return downloadStatus.when(
-              initial: () => widget.song.isDownloaded
-                  ? Icon(AppIcons.check, color: theme.colorScheme.secondary)
-                  : Icon(AppIcons.cloud, color: theme.colorScheme.secondary),
-              pending: () => const CircularProgressIndicator(strokeWidth: 2),
-              loading: (progress) => SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  value: progress,
+                return downloadStatus.when(
+                  initial: () => widget.song.isDownloaded
+                      ? Icon(AppIcons.check, color: theme.colorScheme.secondary)
+                      : Icon(
+                          AppIcons.cloud,
+                          color: theme.colorScheme.secondary,
+                        ),
+                  pending: () =>
+                      const CircularProgressIndicator(strokeWidth: 2),
+                  loading: (progress) => SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      value: progress,
+                    ),
+                  ),
+                  success: () =>
+                      Icon(AppIcons.check, color: theme.colorScheme.secondary),
+                  error: (message) =>
+                      Icon(AppIcons.error, color: theme.colorScheme.error),
+                );
+              },
+            ),
+            if (widget.isEditMode) ...[
+              const SizedBox(width: 12),
+              ReorderableDragStartListener(
+                index: widget.index,
+                child: Icon(
+                  Icons.drag_handle,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              success: () =>
-                  Icon(AppIcons.check, color: theme.colorScheme.secondary),
-              error: (message) =>
-                  Icon(AppIcons.error, color: theme.colorScheme.error),
-            );
-          },
+            ],
+          ],
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
         dense: true,

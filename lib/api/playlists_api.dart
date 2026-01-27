@@ -240,6 +240,31 @@ class PlaylistsApi {
     }
   }
 
+  Future<void> moveSong(
+    String playlistId,
+    String songId,
+    String newOrder,
+  ) async {
+    final user = authRepo.loggedInUser;
+    if (user == null) {
+      throw Exception('User not logged in');
+    }
+    final myUserId = user.id;
+    try {
+      final response = await client.put(
+        '/api/users/$myUserId/playlists/$playlistId/songs/$songId',
+        data: {'order': newOrder},
+      );
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        throw Exception('Failed to move song: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error moving song in playlist: $e');
+    }
+  }
+
   Future<SyncManifest> getSyncChanges(DateTime? since) async {
     try {
       final query = {'since': since != null ? since.toIso8601String() : ""};

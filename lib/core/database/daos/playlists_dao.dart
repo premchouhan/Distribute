@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:distributeapp/core/database/database.dart';
 import 'package:drift/drift.dart';
 import '../tables.dart';
+import '../../utils/ordering.dart';
 
 part 'playlists_dao.g.dart';
 
@@ -28,12 +29,15 @@ class PlaylistsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Stream<List<TypedResult>> watchSongs(String playlistId) {
-    final query = select(songs).join([
-      innerJoin(playlistSongs, playlistSongs.songId.equalsExp(songs.id)),
-      leftOuterJoin(albums, albums.id.equalsExp(songs.albumId)),
-      leftOuterJoin(songArtists, songArtists.songId.equalsExp(songs.id)),
-      leftOuterJoin(artists, artists.id.equalsExp(songArtists.artistId)),
-    ])..where(playlistSongs.playlistId.equals(playlistId));
+    final query =
+        select(songs).join([
+            innerJoin(playlistSongs, playlistSongs.songId.equalsExp(songs.id)),
+            leftOuterJoin(albums, albums.id.equalsExp(songs.albumId)),
+            leftOuterJoin(songArtists, songArtists.songId.equalsExp(songs.id)),
+            leftOuterJoin(artists, artists.id.equalsExp(songArtists.artistId)),
+          ])
+          ..where(playlistSongs.playlistId.equals(playlistId))
+          ..orderBy([OrderingTerm(expression: playlistSongs.order)]);
 
     return query.watch();
   }
@@ -84,8 +88,26 @@ class PlaylistsDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> addSongToPlaylist(String playlistId, String songId) async {
     await transaction(() async {
+      final lastSong =
+          await (select(playlistSongs)
+                ..where((t) => t.playlistId.equals(playlistId))
+                ..orderBy([
+                  (t) => OrderingTerm(
+                    expression: t.order,
+                    mode: OrderingMode.desc,
+                  ),
+                ])
+                ..limit(1))
+              .getSingleOrNull();
+
+      final nextOrder = generateNextKey(lastSong?.order ?? '');
+
       await into(playlistSongs).insert(
-        PlaylistSongsCompanion.insert(playlistId: playlistId, songId: songId),
+        PlaylistSongsCompanion.insert(
+          playlistId: playlistId,
+          songId: songId,
+          order: Value(nextOrder),
+        ),
         mode: InsertMode.insert,
       );
 
@@ -93,7 +115,11 @@ class PlaylistsDao extends DatabaseAccessor<AppDatabase>
         SyncQueueCompanion.insert(
           action: 'ADD_SONG',
           entityTable: 'playlist_songs',
-          payload: jsonEncode({'playlistId': playlistId, 'songId': songId}),
+          payload: jsonEncode({
+            'playlistId': playlistId,
+            'songId': songId,
+            'order': nextOrder,
+          }),
           createdAt: DateTime.now(),
         ),
       );
@@ -107,35 +133,52 @@ class PlaylistsDao extends DatabaseAccessor<AppDatabase>
     required List<ArtistEntity> artists,
   }) async {
     await transaction(() async {
-      // Ensure Album, Song exist
       await into(albums).insert(album, mode: InsertMode.insertOrIgnore);
       await into(songs).insert(song, mode: InsertMode.insertOrIgnore);
 
-      // Ensure Artists exist and link them
       for (final artist in artists) {
         await into(
           this.artists,
         ).insert(artist, mode: InsertMode.insertOrIgnore);
 
-        // Link Artist to Song
         await into(songArtists).insert(
           SongArtistsCompanion.insert(songId: song.id, artistId: artist.id),
           mode: InsertMode.insertOrIgnore,
         );
       }
 
-      // Add to playlist
+      final lastSong =
+          await (select(playlistSongs)
+                ..where((t) => t.playlistId.equals(playlistId))
+                ..orderBy([
+                  (t) => OrderingTerm(
+                    expression: t.order,
+                    mode: OrderingMode.desc,
+                  ),
+                ])
+                ..limit(1))
+              .getSingleOrNull();
+
+      final nextOrder = generateNextKey(lastSong?.order ?? '');
+
       await into(playlistSongs).insert(
-        PlaylistSongsCompanion.insert(playlistId: playlistId, songId: song.id),
+        PlaylistSongsCompanion.insert(
+          playlistId: playlistId,
+          songId: song.id,
+          order: Value(nextOrder),
+        ),
         mode: InsertMode.insert,
       );
 
-      // Sync
       await into(syncQueue).insert(
         SyncQueueCompanion.insert(
           action: 'ADD_SONG',
           entityTable: 'playlist_songs',
-          payload: jsonEncode({'playlistId': playlistId, 'songId': song.id}),
+          payload: jsonEncode({
+            'playlistId': playlistId,
+            'songId': song.id,
+            'order': nextOrder,
+          }),
           createdAt: DateTime.now(),
         ),
       );
@@ -214,5 +257,34 @@ class PlaylistsDao extends DatabaseAccessor<AppDatabase>
     await (update(songs)..where((t) => t.id.equals(songId))).write(
       SongsCompanion(isDownloaded: Value(downloaded)),
     );
+  }
+
+  Future<void> moveSong(
+    String playlistId,
+    String songId,
+    String? prevOrderId,
+    String? nextOrderId,
+  ) async {
+    await transaction(() async {
+      final newOrder = generateKeyBetween(prevOrderId, nextOrderId);
+
+      await (update(playlistSongs)..where(
+            (t) => t.playlistId.equals(playlistId) & t.songId.equals(songId),
+          ))
+          .write(PlaylistSongsCompanion(order: Value(newOrder)));
+
+      await into(syncQueue).insert(
+        SyncQueueCompanion.insert(
+          action: 'MOVE_SONG',
+          entityTable: 'playlist_songs',
+          payload: jsonEncode({
+            'playlistId': playlistId,
+            'songId': songId,
+            'order': newOrder,
+          }),
+          createdAt: DateTime.now(),
+        ),
+      );
+    });
   }
 }

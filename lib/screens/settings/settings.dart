@@ -142,6 +142,17 @@ class _DataSection extends StatelessWidget {
         ),
         HoverableListTile(
           title: const Text(
+            'Customization',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          leading: SettingsIcon(
+            AppIcons.brush,
+          ), // Assuming brush icon exists or use another one
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/settings/customization'),
+        ),
+        HoverableListTile(
+          title: const Text(
             'Requests',
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
