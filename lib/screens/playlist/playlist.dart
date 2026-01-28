@@ -209,7 +209,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 child: Row(
                   spacing: 6,
                   mainAxisSize: MainAxisSize.min,
-                  children: [Icon(AppIcons.delete), Text('Downloads')],
+                  children: [Icon(AppIcons.delete), Text('Remove Downloads')],
                 ),
               )
             else
@@ -363,13 +363,13 @@ class _SongTileState extends State<_SongTile> {
           children: [
             BlocBuilder<DownloadCubit, DownloadState>(
               buildWhen: (previous, current) {
-                final prevStatus = previous.queue[widget.song.fileId];
-                final currStatus = current.queue[widget.song.fileId];
+                final prevStatus = previous.queue[widget.song.id];
+                final currStatus = current.queue[widget.song.id];
                 return prevStatus != currStatus;
               },
               builder: (context, state) {
                 final downloadStatus =
-                    state.queue[widget.song.fileId] ??
+                    state.queue[widget.song.id] ??
                     const DownloadStatus.initial();
 
                 return downloadStatus.when(

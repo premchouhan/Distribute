@@ -36,6 +36,8 @@ class _MusicPlayerState extends State<MusicPlayer>
   late final PageController _pageController;
 
   final FocusNode _focusNode = FocusNode();
+  bool _isProgrammaticPageChange = false;
+  int _programmaticTargetIndex = -1;
 
   @override
   void initState() {
@@ -226,9 +228,13 @@ class _MusicPlayerState extends State<MusicPlayer>
                     (targetPage - (_pageController.page ?? targetPage)).abs();
 
                 if (offset > 1) {
+                  _isProgrammaticPageChange = true;
+                  _programmaticTargetIndex = state.queueIndex;
                   _pageController.jumpToPage(targetPage);
                 } else if (_pageController.position.userScrollDirection ==
                     ScrollDirection.idle) {
+                  _isProgrammaticPageChange = true;
+                  _programmaticTargetIndex = state.queueIndex;
                   _pageController.animateToPage(
                     targetPage,
                     duration: const Duration(milliseconds: 500),
@@ -420,7 +426,20 @@ class _MusicPlayerState extends State<MusicPlayer>
                         children: [
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 350),
-                            child: _PlayerArtwork(artworkData: artworkData),
+                            transitionBuilder: (child, animation) =>
+                                FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                ),
+                            child: _PlayerArtwork(
+                              key: ValueKey(
+                                artworkData.imageFileHq?.path ??
+                                    artworkData.imageFileLq?.path ??
+                                    artworkData.artUri?.toString() ??
+                                    'default-artwork',
+                              ),
+                              artworkData: artworkData,
+                            ),
                           ),
                           ScrollConfiguration(
                             behavior: ScrollConfiguration.of(context).copyWith(
@@ -443,9 +462,15 @@ class _MusicPlayerState extends State<MusicPlayer>
                                   if (state.queue.isEmpty) return;
                                   var index = page % state.queue.length;
 
-                                  debugPrint("page changed: $index");
+                                  if (_isProgrammaticPageChange) {
+                                    if (index == _programmaticTargetIndex) {
+                                      _isProgrammaticPageChange = false;
+                                      _programmaticTargetIndex = -1;
+                                    }
+                                    return;
+                                  }
 
-                                  debugPrint("targetQueueIndex: $index");
+                                  debugPrint("index: $index");
                                   debugPrint("queueIndex: ${state.queueIndex}");
 
                                   if (index != state.queueIndex) {
@@ -534,7 +559,7 @@ class _MusicPlayerState extends State<MusicPlayer>
 class _PlayerArtwork extends StatelessWidget {
   final ArtworkData artworkData;
 
-  const _PlayerArtwork({required this.artworkData});
+  const _PlayerArtwork({super.key, required this.artworkData});
 
   @override
   Widget build(BuildContext context) {

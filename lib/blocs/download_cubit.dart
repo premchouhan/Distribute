@@ -39,11 +39,11 @@ class DownloadCubit extends Cubit<DownloadState> {
     if (song.fileId == null) {
       throw Exception("Song has no fileId");
     }
-    if (_downloadQueue.any((s) => s.fileId == song.fileId) ||
-        state.queue[song.fileId] is DownloadStatusLoading) {
+    if (_downloadQueue.any((s) => s.id == song.id) ||
+        state.queue[song.id] is DownloadStatusLoading) {
       return;
     }
-    _updateStatus(song.fileId!, const DownloadStatus.pending());
+    _updateStatus(song.id, const DownloadStatus.pending());
     _downloadQueue.add(song);
     _processQueue();
   }
@@ -106,35 +106,35 @@ class DownloadCubit extends Cubit<DownloadState> {
     if (song.fileId == null) {
       throw Exception("Song has no fileId");
     }
-    _updateStatus(song.fileId!, const DownloadStatus.loading(progress: 0.0));
+    _updateStatus(song.id, const DownloadStatus.loading(progress: 0.0));
 
     try {
       await _api.downloadFile(song, (received, total) {
         if (total != -1) {
           _updateStatus(
-            song.fileId!,
+            song.id,
             DownloadStatus.loading(progress: received / total),
           );
         }
       });
       await _playlistRepository.updateSongDownloaded(song.id, true);
-      _updateStatus(song.fileId!, const DownloadStatus.success());
+      _updateStatus(song.id, const DownloadStatus.success());
     } catch (e) {
-      _updateStatus(song.fileId!, DownloadStatus.error(message: e.toString()));
+      _updateStatus(song.id, DownloadStatus.error(message: e.toString()));
     }
   }
 
-  void _updateStatus(String fileId, DownloadStatus status) {
-    emit(state.copyWith(queue: {...state.queue, fileId: status}));
+  void _updateStatus(String songId, DownloadStatus status) {
+    emit(state.copyWith(queue: {...state.queue, songId: status}));
   }
 
   Future<void> deleteFile(Song song) async {
     try {
       await _api.deleteFile(song);
       await _playlistRepository.updateSongDownloaded(song.id, false);
-      _updateStatus(song.fileId!, const DownloadStatus.initial());
+      _updateStatus(song.id, const DownloadStatus.initial());
     } catch (e) {
-      _updateStatus(song.fileId!, DownloadStatus.error(message: e.toString()));
+      _updateStatus(song.id, DownloadStatus.error(message: e.toString()));
     }
   }
 }
