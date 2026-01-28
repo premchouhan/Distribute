@@ -91,15 +91,23 @@ class _MusicPlayerState extends State<MusicPlayer>
   }
 
   void _onExpandTap() {
-    if (_expandController.isDismissed) {
-      _expandController.forward(from: 0);
+    if (_expandController.value < 0.5) {
+      _expandController.animateTo(
+        1.0,
+        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 300),
+      );
       _focusNode.requestFocus();
     }
   }
 
   void _onCloseTap() {
     if (!_expandController.isDismissed) {
-      _expandController.reverse();
+      _expandController.animateTo(
+        0.0,
+        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 300),
+      );
       _focusNode.unfocus();
     }
   }
@@ -265,7 +273,11 @@ class _MusicPlayerState extends State<MusicPlayer>
               _enterController.forward();
             } else {
               _enterController.reverse();
-              _expandController.reverse();
+              _expandController.animateTo(
+                0.0,
+                curve: Curves.easeOutCubic,
+                duration: const Duration(milliseconds: 300),
+              );
             }
 
             if (state.queue.isNotEmpty && _pageController.hasClients) {
@@ -317,14 +329,32 @@ class _MusicPlayerState extends State<MusicPlayer>
               const double velocityThreshold = 300.0;
               final double velocity = details.primaryVelocity!;
 
+              final Curve curve = Curves.easeOutCubic;
+              const duration = Duration(milliseconds: 300);
               if (velocity < -velocityThreshold) {
-                _expandController.forward();
+                _expandController.animateTo(
+                  1.0,
+                  curve: curve,
+                  duration: duration,
+                );
               } else if (velocity > velocityThreshold) {
-                _expandController.reverse();
+                _expandController.animateTo(
+                  0.0,
+                  curve: curve,
+                  duration: duration,
+                );
               } else if (_expandController.value > 0.5) {
-                _expandController.forward();
+                _expandController.animateTo(
+                  1.0,
+                  curve: curve,
+                  duration: duration,
+                );
               } else {
-                _expandController.reverse();
+                _expandController.animateTo(
+                  0.0,
+                  curve: curve,
+                  duration: duration,
+                );
               }
             }
 
@@ -354,12 +384,7 @@ class _MusicPlayerState extends State<MusicPlayer>
                 _expandController,
               ]),
               builder: (context, _) {
-                final t = CurvedAnimation(
-                  parent: _expandController,
-                  curve: _expandController.status == AnimationStatus.forward
-                      ? Curves.linearToEaseOut
-                      : Curves.easeInOutCubic,
-                ).value;
+                final t = _expandController.value;
 
                 final currentHeight = lerpDouble(
                   _miniHeight,
@@ -473,6 +498,7 @@ class _MusicPlayerState extends State<MusicPlayer>
                               },
                             ),
                             child: GestureDetector(
+                              behavior: HitTestBehavior.translucent,
                               onTap: _onExpandTap,
                               onVerticalDragUpdate: handleDragUpdate,
                               onVerticalDragEnd: handleDragEnd,
@@ -514,35 +540,45 @@ class _MusicPlayerState extends State<MusicPlayer>
                               ),
                             ),
                           ),
-                          if (t > 0)
-                            Opacity(
+                          IgnorePointer(
+                            ignoring: t < 0.5,
+                            child: Opacity(
                               opacity: t.clamp(0.0, 1.0),
                               child: staticFullBackground,
                             ),
-                          if (t > 0)
-                            Container(
-                              color: Colors.black.withAlpha(
-                                (255 * 0.2 * t).toInt(),
+                          ),
+                          IgnorePointer(
+                            ignoring: t < 0.5,
+                            child: Opacity(
+                              opacity: t.clamp(0.0, 1.0),
+                              child: Container(
+                                color: Colors.black.withAlpha(
+                                  (255 * 0.2 * t).toInt(),
+                                ),
                               ),
                             ),
-                          Visibility(
-                            visible: t > 0.0,
-                            maintainState: true,
-                            maintainAnimation: true,
-                            maintainSize: true,
-                            child: TickerMode(
-                              enabled: t > 0.0,
-                              child: Opacity(
-                                key: const ValueKey('full_player'),
-                                opacity: t.clamp(0.0, 1.0),
-                                child: Transform.translate(
-                                  offset: Offset(0, (1.0 - t) * 50),
-                                  child: OverflowBox(
-                                    maxWidth: maxPlayerWidth,
-                                    minWidth: maxPlayerWidth,
-                                    maxHeight: maxPlayerHeight,
-                                    minHeight: maxPlayerHeight,
-                                    child: fullPlayer,
+                          ),
+                          IgnorePointer(
+                            ignoring: t < 0.5,
+                            child: Visibility(
+                              visible: t > 0.0,
+                              maintainState: true,
+                              maintainAnimation: true,
+                              maintainSize: true,
+                              child: TickerMode(
+                                enabled: t > 0.0,
+                                child: Opacity(
+                                  key: const ValueKey('full_player'),
+                                  opacity: t.clamp(0.0, 1.0),
+                                  child: Transform.translate(
+                                    offset: Offset(0, (1.0 - t) * 50),
+                                    child: OverflowBox(
+                                      maxWidth: maxPlayerWidth,
+                                      minWidth: maxPlayerWidth,
+                                      maxHeight: maxPlayerHeight,
+                                      minHeight: maxPlayerHeight,
+                                      child: fullPlayer,
+                                    ),
                                   ),
                                 ),
                               ),
