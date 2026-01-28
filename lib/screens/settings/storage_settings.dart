@@ -166,18 +166,21 @@ class _StorageSettingsViewState extends State<_StorageSettingsView> {
             ? const Center(child: CircularProgressIndicator())
             : ListView(
                 padding: EdgeInsets.fromLTRB(
-                  12,
+                  16,
                   kToolbarHeight + MediaQuery.of(context).padding.top + 12,
-                  12,
+                  16,
                   12,
                 ),
                 children: [
                   _buildUsageCard(theme),
                   const SizedBox(height: 24),
-                  Text(
-                    "Downloads",
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.primary,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      "Downloads",
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),

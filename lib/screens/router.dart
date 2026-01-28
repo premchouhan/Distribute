@@ -14,6 +14,7 @@ import 'package:distributeapp/screens/request.dart';
 import 'package:distributeapp/screens/search/search.dart';
 import 'package:distributeapp/screens/settings/settings.dart';
 import 'package:distributeapp/screens/settings/storage_settings.dart';
+import 'package:distributeapp/screens/settings/server_url_settings_screen.dart';
 import 'package:distributeapp/screens/settings/customization_settings.dart';
 import 'package:distributeapp/core/preferences/settings_repository.dart';
 import 'package:distributeapp/core/preferences/settings_cubit.dart';
@@ -28,7 +29,7 @@ import 'package:distributeapp/theme/app_icons.dart';
 
 import 'package:distributeapp/screens/welcome/onboarding_scaffold.dart';
 import 'package:distributeapp/screens/welcome/welcome_page.dart';
-import 'package:distributeapp/screens/welcome/server_url_page.dart';
+
 import 'package:distributeapp/screens/welcome/eula.dart';
 import 'package:distributeapp/screens/welcome/login_page.dart';
 import 'package:distributeapp/screens/welcome/signup_page.dart';
@@ -88,11 +89,9 @@ final GoRouter router = GoRouter(
         ),
         GoRoute(
           path: 'server',
-          builder: (context, state) => OnboardingScaffold(
-            child: ServerUrlPage(
-              onNext: () => context.push('/welcome/eula'),
-              onBack: () => context.pop(),
-            ),
+          builder: (context, state) => ServerUrlSettingsScreen(
+            onNext: () => context.push('/welcome/eula'),
+            onBack: () => context.pop(),
           ),
         ),
         GoRoute(
@@ -255,6 +254,10 @@ final GoRouter router = GoRouter(
                 GoRoute(
                   path: 'storage',
                   builder: (context, state) => const StorageSettingsScreen(),
+                ),
+                GoRoute(
+                  path: 'server',
+                  builder: (context, state) => const ServerUrlSettingsScreen(),
                 ),
                 GoRoute(
                   path: 'customization',

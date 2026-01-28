@@ -151,15 +151,6 @@ class _DataSection extends StatelessWidget {
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/settings/customization'),
         ),
-        HoverableListTile(
-          title: const Text(
-            'Requests',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          leading: SettingsIcon(AppIcons.requests),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push('/settings/requests'),
-        ),
       ],
     );
   }
@@ -176,37 +167,55 @@ class _ServerSection extends StatelessWidget {
         final serverUrl = settingsState.serverURL;
         return Column(
           children: [
-            HoverableListTile(
-              leading: SettingsIcon(AppIcons.dns),
-              title: Row(
-                children: [
-                  const Text(
-                    'Home server URL',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+            BlocBuilder<ServerStatusCubit, ServerStatusState>(
+              builder: (context, serverState) {
+                final validationMessage = serverState.maybeWhen(
+                  loaded: (_, msg) => msg,
+                  orElse: () => null,
+                );
+
+                return HoverableListTile(
+                  leading: SettingsIcon(AppIcons.dns),
+                  title: Row(
+                    children: [
+                      const Text(
+                        'Home server URL',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      if (serverUrl.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 8.0),
+                          child: TagBadge(),
+                        ),
+                      if (validationMessage != null)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 8.0),
+                          child: TagBadge(
+                            message: '!',
+                            bgColor: Colors.amber,
+                            color: Colors.black,
+                          ),
+                        ),
+                    ],
                   ),
-                  if (serverUrl.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 8.0),
-                      child: TagBadge(),
-                    ),
-                ],
-              ),
-              subtitle: Text(
-                serverUrl.isNotEmpty ? serverUrl : "https://example.com",
-                style: theme.textTheme.bodySmall,
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _showServerUrlDialog(context, serverUrl),
+                  subtitle: Text(
+                    serverUrl.isNotEmpty ? serverUrl : "https://example.com",
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/server'),
+                );
+              },
             ),
             BlocBuilder<ServerStatusCubit, ServerStatusState>(
               builder: (context, serverState) {
                 final serverVersion = serverState.maybeWhen(
-                  loaded: (info) => info.version,
+                  loaded: (info, _) => info.version,
                   orElse: () => 'Disconnected',
                 );
 
                 final isLoaded = serverState.maybeWhen(
-                  loaded: (_) => true,
+                  loaded: (_, msg) => true,
                   orElse: () => false,
                 );
 
@@ -233,79 +242,19 @@ class _ServerSection extends StatelessWidget {
                 );
               },
             ),
+            HoverableListTile(
+              title: const Text(
+                'Requests',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              leading: SettingsIcon(AppIcons.requests),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/settings/requests'),
+            ),
           ],
         );
       },
     );
-  }
-
-  Future<void> _showServerUrlDialog(
-    BuildContext context,
-    String currentUrl,
-  ) async {
-    final isLoggedIn = context.read<AuthCubit>().state.maybeWhen(
-      authenticated: (_) => true,
-      orElse: () => false,
-    );
-
-    final result = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => _ServerUrlDialog(
-        currentUrl: currentUrl,
-        showLogoutWarning: isLoggedIn,
-      ),
-    );
-
-    if (!context.mounted || result == null) return;
-
-    if (isLoggedIn) {
-      await context.read<AuthCubit>().logout();
-    }
-
-    if (!context.mounted) return;
-
-    final trimmed = result.trim();
-    final normalized = _normalizeUrl(trimmed);
-    context.read<SettingsCubit>().setServerURL(normalized);
-    context.read<ServerStatusCubit>().loadStatus();
-  }
-
-  String _normalizeUrl(String input) {
-    if (input.isEmpty) return input;
-    if (input.contains('://')) return input;
-
-    // Default to HTTP for local addresses, HTTPS for everything else
-    final uri = Uri.tryParse('http://$input');
-    if (uri == null) return 'https://$input';
-
-    final host = uri.host;
-
-    // Check for localhost or .local (mDNS)
-    if (host == 'localhost' || host.endsWith('.local')) {
-      return 'http://$input';
-    }
-
-    // Check for private IPv4 ranges
-    // 127.0.0.0/8
-    // 10.0.0.0/8
-    // 192.168.0.0/16
-    // 172.16.0.0/12
-    final parts = host.split('.');
-    if (parts.length == 4) {
-      final p0 = int.tryParse(parts[0]);
-      final p1 = int.tryParse(parts[1]);
-
-      if (p0 != null) {
-        if (p0 == 127) return 'http://$input';
-        if (p0 == 10) return 'http://$input';
-        if (p0 == 192 && p1 == 168) return 'http://$input';
-        if (p0 == 172 && p1 != null && p1 >= 16 && p1 <= 31) {
-          return 'http://$input';
-        }
-      }
-    }
-
-    return 'https://$input';
   }
 }
 
@@ -437,80 +386,6 @@ class _AboutSection extends StatelessWidget {
             "Distribute (App)\nv$version",
             style: Theme.of(context).textTheme.bodySmall,
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ServerUrlDialog extends StatefulWidget {
-  final String currentUrl;
-  final bool showLogoutWarning;
-
-  const _ServerUrlDialog({
-    required this.currentUrl,
-    required this.showLogoutWarning,
-  });
-
-  @override
-  State<_ServerUrlDialog> createState() => _ServerUrlDialogState();
-}
-
-class _ServerUrlDialogState extends State<_ServerUrlDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.currentUrl);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Edit server'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _controller,
-            decoration: const InputDecoration(
-              labelText: 'Server URL',
-              hintText: 'https://example.com',
-              border: OutlineInputBorder(),
-            ),
-            autofocus: true,
-            autocorrect: false,
-            enableSuggestions: false,
-            autofillHints: const [AutofillHints.url],
-          ),
-          if (widget.showLogoutWarning)
-            Padding(
-              padding: const EdgeInsets.only(top: 12.0),
-              child: Text(
-                'Changing the server URL will log you out.',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
-          child: const Text('Save'),
         ),
       ],
     );

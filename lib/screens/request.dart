@@ -88,7 +88,7 @@ class RequestsScreenState extends State<RequestsScreen> {
                   BlocBuilder<ServerStatusCubit, ServerStatusState>(
                     builder: (context, state) {
                       return state.maybeWhen(
-                        loaded: (info) {
+                        loaded: (info, _) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 16.0),
                             child: Text(
@@ -121,7 +121,7 @@ class RequestsScreenState extends State<RequestsScreen> {
                       BlocBuilder<ServerStatusCubit, ServerStatusState>(
                         builder: (context, state) {
                           return state.maybeWhen(
-                            loaded: (info) {
+                            loaded: (info, _) {
                               if (info.requestMailCategories.isNotEmpty) {
                                 return SegmentedButton<String>(
                                   style: ElevatedButton.styleFrom(

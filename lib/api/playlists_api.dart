@@ -28,10 +28,9 @@ class PlaylistsApi {
     if (user == null) {
       throw Exception('User not logged in');
     }
-    final myUserId = user.id;
     try {
       final response = await client.post(
-        '/api/users/$myUserId/playlists/$playlistId/songs',
+        '/api/playlists/$playlistId/songs',
         data: {'song_id': songId},
       );
       if (response.statusCode == 200) {
@@ -101,10 +100,9 @@ class PlaylistsApi {
     if (user == null) {
       throw Exception('User not logged in');
     }
-    final myUserId = user.id;
     try {
-      final response = await client.patch(
-        '/api/users/$myUserId/playlists/$playlistId/rename',
+      final response = await client.put(
+        '/api/playlists/$playlistId',
         data: {'name': newName},
       );
       if (response.statusCode == 200) {
@@ -122,11 +120,8 @@ class PlaylistsApi {
     if (user == null) {
       throw Exception('User not logged in');
     }
-    final myUserId = user.id;
     try {
-      final response = await client.delete(
-        '/api/users/$myUserId/playlists/$playlistId',
-      );
+      final response = await client.delete('/api/playlists/$playlistId');
       if (response.statusCode == 204 || response.statusCode == 200) {
         return;
       } else {
@@ -142,10 +137,9 @@ class PlaylistsApi {
     if (user == null) {
       throw Exception('User not logged in');
     }
-    final myUserId = user.id;
     try {
-      final response = await client.patch(
-        '/api/users/$myUserId/playlists/$playlistId/move',
+      final response = await client.put(
+        '/api/playlists/$playlistId/move',
         data: {'parent_folder_id': newParentFolderId},
       );
       if (response.statusCode == 200) {
@@ -225,10 +219,9 @@ class PlaylistsApi {
     if (user == null) {
       throw Exception('User not logged in');
     }
-    final myUserId = user.id;
     try {
       final response = await client.delete(
-        '/api/users/$myUserId/playlists/$playlistId/songs/$songId',
+        '/api/playlists/$playlistId/songs/$songId',
       );
       if (response.statusCode == 204 || response.statusCode == 200) {
         return;
@@ -249,10 +242,9 @@ class PlaylistsApi {
     if (user == null) {
       throw Exception('User not logged in');
     }
-    final myUserId = user.id;
     try {
       final response = await client.put(
-        '/api/users/$myUserId/playlists/$playlistId/songs/$songId',
+        '/api/playlists/$playlistId/songs/$songId',
         data: {'order': newOrder},
       );
       if (response.statusCode == 200) {

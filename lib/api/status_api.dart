@@ -5,13 +5,16 @@ class ServerStatusApi {
 
   ServerStatusApi(this.client);
 
-  Future<Map<String, dynamic>> getServerInfo() async {
-    try {
-      final response = await client.get('/api/info');
+  Future<Map<String, dynamic>> getServerInfo({String? baseUrl}) async {
+    final path = baseUrl != null ? '$baseUrl/api/info' : '/api/info';
+    final response = await client.get(
+      path,
+      options: Options(
+        sendTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 5),
+      ),
+    );
 
-      return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
-      throw Exception('Network error: ${e.message}');
-    }
+    return response.data as Map<String, dynamic>;
   }
 }

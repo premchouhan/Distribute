@@ -6,10 +6,8 @@ import 'package:distributeapp/screens/player/player_fullscreen_content.dart';
 import 'package:distributeapp/core/preferences/settings_cubit.dart';
 import 'package:distributeapp/core/preferences/settings_state.dart';
 import 'package:distributeapp/screens/player/player_mini_content.dart';
-import 'package:distributeapp/screens/player/slide_to_skip.dart';
 import 'package:distributeapp/blocs/music/music_player_bloc.dart';
 import 'package:distributeapp/repositories/audio/music_player_controller.dart';
-import 'package:distributeapp/repositories/audio/queue_manager.dart';
 import 'package:distributeapp/core/artwork/artwork_repository.dart';
 import 'package:distributeapp/model/song.dart';
 import 'package:audio_service/audio_service.dart';
@@ -33,6 +31,8 @@ class _MusicPlayerState extends State<MusicPlayer>
 
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _fadeAnimation;
+
+  late final PageController _pageController;
 
   final FocusNode _focusNode = FocusNode();
 
@@ -64,12 +64,27 @@ class _MusicPlayerState extends State<MusicPlayer>
     if (state.currentSong != null) {
       _enterController.value = 1.0;
     }
+
+    _pageController = PageController(initialPage: _getInitialPage());
+  }
+
+  int _getInitialPage() {
+    final state = context.read<MusicPlayerBloc>().state;
+    int initialPage = 50000;
+    if (state.queue.isNotEmpty) {
+      final length = state.queue.length;
+      final index = state.queueIndex;
+      initialPage = 50000 - (50000 % length) + index;
+    }
+
+    return initialPage;
   }
 
   @override
   void dispose() {
     _enterController.dispose();
     _expandController.dispose();
+    _pageController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -228,30 +243,6 @@ class _MusicPlayerState extends State<MusicPlayer>
           ),
       ],
     );
-  }
-
-  MediaItem? _getNeighborMediaItem(
-    ControllerState state, {
-    required bool isNext,
-  }) {
-    if (state.queue.isEmpty) return null;
-    final artworkData = isNext
-        ? state.nextArtworkData
-        : state.previousArtworkData;
-    if (artworkData == null) return null;
-
-    final currentIndex = state.queueIndex;
-    final maxIndex = state.queue.length - 1;
-
-    if (isNext) {
-      if (currentIndex < maxIndex) return state.queue[currentIndex + 1];
-      if (state.loopMode == LoopMode.all) return state.queue[0];
-    } else {
-      if (currentIndex > 0) return state.queue[currentIndex - 1];
-      if (state.loopMode == LoopMode.all) return state.queue[maxIndex];
-    }
-
-    return null;
   }
 
   @override
@@ -418,54 +409,76 @@ class _MusicPlayerState extends State<MusicPlayer>
                             duration: const Duration(milliseconds: 350),
                             child: _buildArtwork(context, artworkData),
                           ),
-                          SlideToSkipMiniPlayer(
-                            currentSongId: state.mediaItem?.id,
-                            onTap: _onExpandTap,
-                            onVerticalDragUpdate: (details) {
-                              final double delta =
-                                  details.primaryDelta! /
-                                  (maxPlayerHeight - _miniHeight);
-                              _expandController.value -= delta;
-                            },
-                            onVerticalDragEnd: (details) {
-                              const double velocityThreshold = 300.0;
-                              final double velocity = details.primaryVelocity!;
-
-                              if (velocity < -velocityThreshold) {
-                                _expandController.forward();
-                              } else if (velocity > velocityThreshold) {
-                                _expandController.reverse();
-                              } else if (_expandController.value > 0.5) {
-                                _expandController.forward();
-                              } else {
-                                _expandController.reverse();
-                              }
-                            },
-                            onSkip: () {
-                              context.read<MusicPlayerBloc>().add(
-                                const MusicPlayerEvent.skipToNext(),
-                              );
-                            },
-                            onPrevious: () {
-                              context.read<MusicPlayerBloc>().add(
-                                const MusicPlayerEvent.skipToPrevious(),
-                              );
-                            },
-                            current: _buildSlideContent(
-                              context,
-                              state.mediaItem,
-                              artworkData,
-                              isCurrent: true,
-                            )!,
-                            next: _buildSlideContent(
-                              context,
-                              _getNeighborMediaItem(state, isNext: true),
-                              state.nextArtworkData,
+                          ScrollConfiguration(
+                            behavior: ScrollConfiguration.of(context).copyWith(
+                              dragDevices: {
+                                PointerDeviceKind.touch,
+                                PointerDeviceKind.mouse,
+                                PointerDeviceKind.trackpad,
+                              },
                             ),
-                            previous: _buildSlideContent(
-                              context,
-                              _getNeighborMediaItem(state, isNext: false),
-                              state.previousArtworkData,
+                            child: GestureDetector(
+                              onTap: _onExpandTap,
+                              onVerticalDragUpdate: (details) {
+                                final double delta =
+                                    details.primaryDelta! /
+                                    (maxPlayerHeight - _miniHeight);
+                                if (_miniHeight + (details.primaryDelta ?? 0) >
+                                    maxPlayerHeight) {
+                                  return;
+                                }
+                                _expandController.value -= delta;
+                              },
+                              onVerticalDragEnd: (details) {
+                                const double velocityThreshold = 300.0;
+                                final double velocity =
+                                    details.primaryVelocity!;
+
+                                if (velocity < -velocityThreshold) {
+                                  _expandController.forward();
+                                } else if (velocity > velocityThreshold) {
+                                  _expandController.reverse();
+                                } else if (_expandController.value > 0.5) {
+                                  _expandController.forward();
+                                } else {
+                                  _expandController.reverse();
+                                }
+                              },
+                              child: PageView.builder(
+                                controller: _pageController,
+                                itemCount: null,
+                                physics: const PageScrollPhysics(),
+                                onPageChanged: (page) {
+                                  var index = page % state.queue.length;
+
+                                  debugPrint("page changed: $index");
+
+                                  debugPrint("targetQueueIndex: $index");
+                                  debugPrint("queueIndex: ${state.queueIndex}");
+
+                                  if (index != state.queueIndex) {
+                                    context.read<MusicPlayerBloc>().add(
+                                      MusicPlayerEvent.skipToQueueItem(index),
+                                    );
+                                  }
+                                },
+                                itemBuilder: (context, index) {
+                                  if (state.queue.isEmpty) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  final queueIndex = index % state.queue.length;
+                                  final item = state.queue[queueIndex];
+                                  final isCurrentItem =
+                                      queueIndex == state.queueIndex;
+
+                                  return _buildSlideContent(
+                                    context,
+                                    item,
+                                    artworkData,
+                                    isCurrent: isCurrentItem,
+                                  );
+                                },
+                              ),
                             ),
                           ),
                           if (t > 0)
