@@ -358,31 +358,7 @@ class _MusicPlayerState extends State<MusicPlayer>
                   t,
                 )!;
 
-                final Widget rawImage = OverflowBox(
-                  maxWidth: imageSide,
-                  maxHeight: imageSide,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: artworkData.imageFileLq != null
-                        ? Image.file(
-                            artworkData.imageFileLq!,
-                            key: ValueKey(artworkData.imageFileLq!.path),
-                            cacheWidth: 800,
-                            fit: BoxFit.cover,
-                            height: double.infinity,
-                            width: double.infinity,
-                          )
-                        : Image.asset(
-                            'assets/default-playlist-lq.png',
-                            key: const ValueKey('default-playlist'),
-                            fit: BoxFit.cover,
-                            height: double.infinity,
-                            width: double.infinity,
-                          ),
-                  ),
-                );
-
-                final Widget staticFullBackground = Container(
+                final Widget backgroundColorOverlay = Container(
                   foregroundDecoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
@@ -397,14 +373,6 @@ class _MusicPlayerState extends State<MusicPlayer>
                       ],
                     ),
                   ),
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(
-                      sigmaX: 7,
-                      sigmaY: 7,
-                      tileMode: TileMode.clamp,
-                    ),
-                    // child: rawImage,
-                  ),
                 );
 
                 return Positioned(
@@ -415,7 +383,7 @@ class _MusicPlayerState extends State<MusicPlayer>
                   child: FadeTransition(
                     opacity: _fadeAnimation,
                     child: Container(
-                      clipBehavior: Clip.antiAlias,
+                      clipBehavior: Clip.hardEdge,
                       decoration: BoxDecoration(
                         color: artworkData.backgroundColor,
                         borderRadius: BorderRadius.circular(currentRadius),
@@ -432,11 +400,7 @@ class _MusicPlayerState extends State<MusicPlayer>
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          RepaintBoundary(
-                            child: _CrossfadeArtwork(
-                              currentArtwork: artworkData,
-                            ),
-                          ),
+                          _CrossfadeArtwork(currentArtwork: artworkData),
                           ScrollConfiguration(
                             behavior: ScrollConfiguration.of(context).copyWith(
                               dragDevices: {
@@ -506,7 +470,7 @@ class _MusicPlayerState extends State<MusicPlayer>
                             child: Opacity(
                               opacity: t.clamp(0.0, 1.0),
                               child: RepaintBoundary(
-                                child: staticFullBackground,
+                                child: backgroundColorOverlay,
                               ),
                             ),
                           ),
@@ -657,7 +621,7 @@ class _CrossfadeArtworkState extends State<_CrossfadeArtwork>
   @override
   Widget build(BuildContext context) {
     return Container(
-      clipBehavior: Clip.antiAlias,
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: widget.currentArtwork.backgroundColor,
         borderRadius: BorderRadius.circular(0),

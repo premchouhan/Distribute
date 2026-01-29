@@ -187,7 +187,7 @@ class _VinylWidgetState extends State<VinylWidget>
                             alignment: Alignment.center,
                             children: [
                               coverImage,
-                              // Circle Blur in the middle
+                              // Circle Blur in the middle, enabled in settings
                               widget.style == VinylStyle.transparent
                                   ? Center(
                                       child: Container(

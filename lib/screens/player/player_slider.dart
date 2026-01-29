@@ -27,59 +27,57 @@ class MusicPlayerSliderState extends State<MusicPlayerSlider> {
           final totalDuration = context.select(
             (MusicPlayerBloc b) => b.state.duration,
           );
-          return RepaintBoundary(
-            child: Column(
-              children: [
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: widget.primaryColor,
-                    inactiveTrackColor: widget.primaryColor.withAlpha(77),
-                    trackHeight: 8.0,
-                    thumbColor: Colors.transparent,
-                    thumbShape: const RoundSliderThumbShape(
-                      disabledThumbRadius: 0.0,
-                      enabledThumbRadius: 0.0,
-                      elevation: 0.0,
-                      pressedElevation: 0.0,
+          return Column(
+            children: [
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  activeTrackColor: widget.primaryColor,
+                  inactiveTrackColor: widget.primaryColor.withAlpha(77),
+                  trackHeight: 8.0,
+                  thumbColor: Colors.transparent,
+                  thumbShape: const RoundSliderThumbShape(
+                    disabledThumbRadius: 0.0,
+                    enabledThumbRadius: 0.0,
+                    elevation: 0.0,
+                    pressedElevation: 0.0,
+                  ),
+                  overlayColor: Colors.transparent,
+                  trackShape: CustomTrackShape(),
+                ),
+                child: Slider(
+                  min: 0.0,
+                  max: totalDuration.inSeconds.toDouble(),
+                  value: _dragValue ?? currentPosition.inSeconds.toDouble(),
+                  onChanged: (value) {
+                    setState(() {
+                      _dragValue = value;
+                    });
+                  },
+                  onChangeEnd: (value) {
+                    context.read<MusicPlayerBloc>().add(
+                      MusicPlayerEvent.seek(Duration(seconds: value.toInt())),
+                    );
+                    setState(() => _dragValue = null);
+                  },
+                ),
+              ),
+              Transform.translate(
+                offset: const Offset(0, -10),
+                child: Row(
+                  children: [
+                    Text(
+                      _formatDuration(currentPosition),
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
-                    overlayColor: Colors.transparent,
-                    trackShape: CustomTrackShape(),
-                  ),
-                  child: Slider(
-                    min: 0.0,
-                    max: totalDuration.inSeconds.toDouble(),
-                    value: _dragValue ?? currentPosition.inSeconds.toDouble(),
-                    onChanged: (value) {
-                      setState(() {
-                        _dragValue = value;
-                      });
-                    },
-                    onChangeEnd: (value) {
-                      context.read<MusicPlayerBloc>().add(
-                        MusicPlayerEvent.seek(Duration(seconds: value.toInt())),
-                      );
-                      setState(() => _dragValue = null);
-                    },
-                  ),
+                    const Spacer(),
+                    Text(
+                      _formatDuration(totalDuration),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ),
-                Transform.translate(
-                  offset: const Offset(0, -10),
-                  child: Row(
-                    children: [
-                      Text(
-                        _formatDuration(currentPosition),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const Spacer(),
-                      Text(
-                        _formatDuration(totalDuration),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           );
         },
       ),

@@ -1,3 +1,4 @@
+import 'package:distributeapp/blocs/download_cubit.dart';
 import 'package:distributeapp/blocs/file_system_bloc.dart';
 import 'package:distributeapp/blocs/playlist_bloc.dart';
 import 'package:distributeapp/theme/app_icons.dart';
@@ -160,10 +161,49 @@ class _PlaylistOptionsScreenState extends State<PlaylistOptionsScreen> {
               context.push('/folder-picker?itemId=${widget.playlistId}');
             },
           ),
-          HoverableListTile(
-            leading: Icon(AppIcons.download),
-            title: const Text('Download All'),
-            onTap: null,
+          BlocBuilder<DownloadCubit, DownloadState>(
+            builder: (context, downloadState) {
+              // Try to get songs from PlaylistBloc if available (when fromPlaylistScreen is true)
+              List<dynamic> songs = [];
+              try {
+                final playlistState = context.read<PlaylistBloc>().state;
+                songs = playlistState.maybeWhen(
+                  loaded: (playlist, songs) => songs,
+                  orElse: () => <dynamic>[],
+                );
+              } catch (_) {
+                // PlaylistBloc not available (from library screen)
+              }
+              
+              // Check if any songs in the playlist are being downloaded
+              final isDownloading = songs.isNotEmpty && songs.any((song) {
+                final status = downloadState.queue[song.id];
+                return status is DownloadStatusPending || 
+                       status is DownloadStatusLoading;
+              });
+              
+              return HoverableListTile(
+                leading: isDownloading
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(AppIcons.download),
+                title: const Text('Download All'),
+                onTap: isDownloading || songs.isEmpty
+                  ? null
+                  : () {
+                      context.read<DownloadCubit>().downloadPlaylist(songs.cast());
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Started downloading playlist"),
+                        ),
+                      );
+                      Navigator.of(context).pop();
+                    },
+              );
+            },
           ),
         ],
       ),
