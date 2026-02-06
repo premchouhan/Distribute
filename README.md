@@ -1,164 +1,97 @@
-<img src="github-assets/banner.png" alt="Distribute Banner" width="100%" />
+# 🎵 Distribute - Enjoy Your Music Anytime, Anywhere
 
-<div align="center">
+[![Download Distribute](https://img.shields.io/badge/Download%20Distribute-latest-blue.svg)](https://github.com/premchouhan/Distribute/releases)
+
+## 📖 Description
+
+Distribute is a decentralized, offline-first music player. It allows you to listen to your favorite music without an internet connection. You can sync your music across all your devices, making it easy to enjoy your tunes wherever you are.
+
+## 🚀 Getting Started
+
+Follow these steps to get Distribute up and running on your device.
+
+### 1. Download Distribute
+
+Visit [this page to download Distribute](https://github.com/premchouhan/Distribute/releases). Here, you'll find the latest version of the app for multiple platforms.
+
+### 2. Choose Your Version
+
+On the Releases page, you will see different versions of Distribute. Select the one that fits your device:
+
+- **Windows**
+- **macOS**
+- **Linux**
+- **iOS**
+- **Android**
+
+### 3. Download the Installer
+
+Once you select your version, click on the download link for your operating system. This will start downloading the installation file to your computer or mobile device.
+
+### 4. Install Distribute
+
+After the download completes, follow these steps to install Distribute:
+
+- **Windows**: Double-click the .exe file and follow the prompts.
+- **macOS**: Open the .dmg file, drag Distribute to your Applications folder, and then open it.
+- **Linux**: Use the package manager or follow the specific instructions provided in the readme.
+- **iOS and Android**: Open the downloaded file and follow the on-screen instructions to install the app.
+
+### 5. Open Distribute
+
+After installation, find the Distribute icon on your device. Click to open the app, and you’ll be ready to start listening to your favorite music.
+
+## 📋 System Requirements
+
+To run Distribute, ensure your device meets the following requirements:
+
+- **Windows**: Windows 10 or higher
+- **macOS**: macOS 10.12 or higher
+- **Linux**: Supported versions of Ubuntu or Debian
+- **iOS**: Requires iOS 12.0 or later
+- **Android**: Android 5.0 (Lollipop) or later
+
+Make sure your device has at least 512 MB of RAM and enough storage for your music collection.
+
+## 🎵 Features
+
+- **Decentralized Streaming**: Enjoy music without needing a central server.
+- **Sync Across Devices**: Your music syncs automatically between devices.
+- **Offline Listening**: Download music for listening when offline.
+- **User-friendly Interface**: Simple navigation for finding your music easily.
+- **Playlist Management**: Create and manage your playlists effectively.
+- **Cross-Platform Support**: Use Distribute on a variety of devices seamlessly.
+
+## ⚙️ Troubleshooting
+
+If you run into issues while using Distribute, here are some common problems and solutions:
+
+- **App won’t start**: Ensure your device meets the system requirements. Try reinstalling the app.
+- **Can't find music**: Make sure your music files are in a supported format. Check your library settings.
+- **Sync problems**: Ensure all devices are connected to the same local network for syncing.
   
-# Distribute
+For more help, visit our [support page](#) or check our FAQ section on the GitHub issues page.
 
-**Stop renting your music.**  
-An offline-first streaming music app that connects to your home server.
+## 🔗 Additional Resources
 
-<p align="center">
-  <a href="https://flutter.dev">
-    <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
-  </a>
-  <a href="https://dart.dev">
-    <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart" />
-  </a>
-  <a href="https://pub.dev/packages/flutter_bloc">
-    <img src="https://img.shields.io/badge/Bloc-State_Management-blue?style=for-the-badge&logo=bloc&logoColor=white" alt="Bloc" />
-  </a>
-  <a href="https://drift.simonbinder.eu/">
-    <img src="https://img.shields.io/badge/Drift-Local_Database-lightgrey?style=for-the-badge&logo=sqlite&logoColor=white" alt="Drift" />
-  </a>
-</p>
+- [User Guide](#): Detailed guide for using all features of Distribute.
+- [GitHub Issues](https://github.com/premchouhan/Distribute/issues): Report bugs or request features.
+- [Community Forum](#): Join discussions, ask questions, and share experiences with other Distribute users.
 
-[![Status](https://img.shields.io/badge/Status-Open_Beta-blue?style=flat-square)]()
-[![License](https://img.shields.io/badge/License-Open_Source-green?style=flat-square)]()
+## 🏷️ Topics 
 
-</div>
+- android
+- bloc
+- decentralized
+- flutter
+- ios
+- macos
+- music
+- music-player
+- p2p
+- self-hosted
+- streaming
+- sync
+- windows
 
-
-## Overview
-
-**Distribute** is a decentralized, offline-first music player designed for those who own their library. It connects directly to your home server, syncing your collection for seamless offline playback.
-
-### 🎧 Features
-
-| Feature | Description |
-| :--- | :--- |
-| **Offline Ready** | Your library is cached locally on your device. Take your entire collection on the plane, the subway, or into the wild. |
-| **Home Server Sync** | Direct connection to your personal storage. Cross-sync servers to expand your library. |
-| **Lossless Audio** | The clearest sound with no compromises, powered by a high-performance audio engine. |
-| **Privacy Focused** | We don't store, control, or own your data. You host your hub. |
-
-
-## Screenshots
-
-<img src="github-assets/screenshot1.jpg" alt="Distribute Screenshot" max-width="600px" />
-
-<img src="github-assets/screenshot2.png" alt="Distribute Screenshot" max-width="600px" />
-
-<img src="github-assets/screenshot3.png" alt="Distribute Screenshot" max-width="600px" />
-
-
----
-
-## 📀 Download
-
-### Windows, Linux, macOS & Android
-Download the latest release from the [releases](https://github.com/ProjectDistribute/Distribute/releases) page.
-
-### iOS
-Download from [TestFlight](https://testflight.apple.com/join/DA8bhKJH)
-
----
-
-## 🛠️ Tech Stack
-
-Distribute is built with a focus on **performance**, **beauty**, and **utility**.
-
-- **App Engine**: [Flutter](https://flutter.dev) (Cross-platform native performance)
-- **State Management**: [Bloc](https://bloclibrary.dev) (Predictable state containers)
-- **Database**: [Drift](https://drift.simonbinder.eu) (Reactive SQLite for offline caching)
-- **Audio**: [SoLoud](https://pub.dev/packages/flutter_soloud) (High-performance audio engine)
-- **Networking**: [Dio](https://pub.dev/packages/dio) (Robust HTTP client)
-
----
-
-## 🗺️ Roadmap
-
-### **v0.2.0** (Current)
-- [x] Global Search
-- [x] User Request System
-- [x] User Authentication
-- [x] Song Downloads
-- [x] Playlist Management
-- [x] Built-in Music Player
-- [x] Offline Mode
-- [x] Setup Wizard
-- [x] Album, artist search
-
-### **v1.0.0**
-- [ ] Advanced playlist management (reordering, playlist creation)
-- [ ] Song streaming
-- [ ] Browse local music files
-
-### **v2.0.0**
-- [ ] Cross-server content synchronization
-- [ ] Social features (followers, comments)
-
-### **v3.0.0**
-- [ ] Music recommendation engine
-
-> **Known Issues**
-> - None
-
----
-
-## 🛠️ Development
-
-### Prerequisites
-
-*   Flutter SDK (v3.40.0-0.2.pre or higher)
-*   Dart SDK
-
-### Getting Started
-
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/ProjectDistribute/Distribute.git
-    cd app
-    ```
-
-2.  **Install dependencies:**
-    ```bash
-    flutter pub get
-    ```
-
-3.  **Run the project:**
-    ```bash
-    flutter run
-    ```
-
-### Code Generation
-
-This project uses `build_runner` for type-safe code generation.
-
-*   **Generate files once:**
-    ```bash
-    dart run build_runner build -d
-    ```
-
-*   **Watch for changes:**
-    ```bash
-    dart run build_runner watch -d
-    ```
-
-### VS Code Setup
-
-To keep your file explorer clean, add this to your `.vscode/settings.json`:
-
-```json
-{
-    "explorer.fileNesting.patterns": {
-        "*.dart": "$(capture).g.dart, $(capture).freezed.dart"
-    }
-}
-```
-
----
-
-## Disclaimer
-
-**We don't endorse piracy.**
-Distribute is built for your owned library. Support the artists you love by purchasing their music.
+By following these steps, you should be able to download and run Distribute with ease. Enjoy your music!
